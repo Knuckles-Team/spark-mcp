@@ -1,0 +1,81 @@
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix : <http://knuckles.team/kg#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+# Spark Connect ontology — models the job/transform/lineage surface fronted by the
+# spark-mcp tool surface: one long-lived SparkApplication (the spark-runner pod's
+# Connect server) runs SparkJobs, each of which executes a versioned Transform
+# manifest as a TransformRun, consuming and producing pinned Iceberg DatasetVersions
+# through the shared `lakehouse` catalog (scope=lakekeeper, never the shared
+# Iceberg-REST/OAuth2 client default `scope=catalog` — services/spark/AGENTS.md).
+# All classes/properties live in the SHARED `:` (kg#) namespace; only the
+# owl:Ontology node gets the per-package IRI. Backs the spark-mcp tool surface
+# (session / transforms / catalog / lineage / ops tool groups).
+
+# --- classes (owl:Class) ---
+
+:SparkApplication a owl:Class ;
+    rdfs:label "Spark Application" ;
+    rdfs:comment "One Spark Connect server application instance (the spark-runner pod's Connect endpoint at spark-connect.apps.svc:15002)." .
+
+:SparkJob a owl:Class ;
+    rdfs:label "Spark Job" ;
+    rdfs:comment "One Spark job (a single SQL/PySpark execution) submitted against a SparkApplication (spark_application_status)." .
+
+:Transform a owl:Class ;
+    rdfs:label "Transform" ;
+    rdfs:comment "A versioned Transform manifest declaration (kind: sql|pyspark, body, inputs, output) accepted by spark_submit_transform." .
+
+:TransformRun a owl:Class ;
+    rdfs:label "Transform Run" ;
+    rdfs:comment "One execution of a Transform (spark_submit_transform / spark_rerun_transform), pinning input DatasetVersions and recording success or typed failure." .
+
+:DatasetVersion a owl:Class ;
+    rdfs:label "Dataset Version" ;
+    rdfs:comment "One pinned Iceberg snapshot version of a lakehouse table, consumed or produced by a TransformRun (as_of_version pinning for deterministic reruns)." .
+
+# --- links (owl:ObjectProperty) ---
+
+:hasJob a owl:ObjectProperty ;
+    rdfs:label "has job" ;
+    rdfs:comment "Links a SparkApplication to a SparkJob submitted against it." ;
+    rdfs:domain :SparkApplication ;
+    rdfs:range :SparkJob .
+
+:runs a owl:ObjectProperty ;
+    rdfs:label "runs" ;
+    rdfs:comment "Links a SparkJob to the TransformRun it executes." ;
+    rdfs:domain :SparkJob ;
+    rdfs:range :TransformRun .
+
+:executesTransform a owl:ObjectProperty ;
+    rdfs:label "executes transform" ;
+    rdfs:comment "Links a TransformRun to the versioned Transform manifest it executed." ;
+    rdfs:domain :TransformRun ;
+    rdfs:range :Transform .
+
+:producedVersion a owl:ObjectProperty ;
+    rdfs:label "produced version" ;
+    rdfs:comment "Links a TransformRun to the output DatasetVersion it produced (the Transform manifest's declared output table's new snapshot)." ;
+    rdfs:domain :TransformRun ;
+    rdfs:range :DatasetVersion .
+
+:consumedVersion a owl:ObjectProperty ;
+    rdfs:label "consumed version" ;
+    rdfs:comment "Links a TransformRun to an input DatasetVersion it read (pinned via as_of_version, never an implicit 'latest' read on a declared rerun)." ;
+    rdfs:domain :TransformRun ;
+    rdfs:range :DatasetVersion .
+
+<http://knuckles.team/kg/spark> a owl:Ontology ;
+    rdfs:label "Spark Connect Ontology" ;
+    rdfs:comment """Spark Connect job/transform/lineage topology — applications, jobs,
+    versioned Transform manifests, their runs, and the pinned Iceberg
+    DatasetVersions they consume/produce — federated into the agent-utilities
+    knowledge-graph hub. Spark Connect is live on spark-connect.apps.svc:15002
+    (the spark-runner pod's Connect endpoint), proven with a real
+    pyspark.sql.connect session against the deployed lakehouse.""" ;
+    owl:imports <http://knuckles.team/kg> .

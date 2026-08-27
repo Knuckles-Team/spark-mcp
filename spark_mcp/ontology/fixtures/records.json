@@ -1,0 +1,5 @@
+{
+  "connector": "spark-mcp",
+  "fixtures": [],
+  "schema_version": "1"
+}

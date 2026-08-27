@@ -1,0 +1,6 @@
+{
+  "connector": "spark-mcp",
+  "current_ontology_source": "spark",
+  "migrations": [],
+  "schema_version": "1"
+}

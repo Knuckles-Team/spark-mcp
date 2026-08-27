@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "spark-mcp": {
+      "command": "uv",
+      "args": [
+        "run",
+        "spark-mcp"
+      ],
+      "env": {
+        "MCP_TOOL_MODE": "intent",
+        "SPARK_CONNECT_URL": "sc://spark-connect.apps.svc:15002",
+        "SPARK_SUBMIT_TIMEOUT_S": "300",
+        "SPARK_LAKEHOUSE_CATALOG": "lakehouse",
+        "SPARK_LAKEHOUSE_SCOPE": "lakekeeper",
+        "SPARK_ENABLE_TRANSFORMS": "False",
+        "SPARK_CONNECT_ATTACH_IDENTITY_TOKEN": "False",
+        "SPARK_CONNECT_USE_SSL": "False",
+        "SPARKTOOL": "True"
+      }
+    }
+  }
+}

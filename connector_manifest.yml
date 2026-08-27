@@ -1,0 +1,122 @@
+connector: spark-mcp
+ontology_source: spark
+schema_version: '1'
+resources:
+- name: DatasetVersion
+  label: Dataset Version
+  id_prefix: datasetversion
+  relations: []
+- name: SparkApplication
+  label: Spark Application
+  id_prefix: sparkapplication
+  relations:
+  - name: hasJob
+    label: has job
+    target: SparkJob
+    lpg_rel_type: ''
+- name: SparkJob
+  label: Spark Job
+  id_prefix: sparkjob
+  relations:
+  - name: runs
+    label: runs
+    target: TransformRun
+    lpg_rel_type: ''
+- name: Transform
+  label: Transform
+  id_prefix: transform
+  relations: []
+- name: TransformRun
+  label: Transform Run
+  id_prefix: transformrun
+  relations:
+  - name: consumedVersion
+    label: consumed version
+    target: DatasetVersion
+    lpg_rel_type: ''
+  - name: executesTransform
+    label: executes transform
+    target: Transform
+    lpg_rel_type: ''
+  - name: producedVersion
+    label: produced version
+    target: DatasetVersion
+    lpg_rel_type: ''
+actions:
+- id: epistemic-answer
+  name: Epistemic Answer
+  description: 'Answers epistemic_status/why/what_changed queries over the shared knowledge graph: calibrated
+    confidence, evidence/source citations, belief justification trees, bitemporal valid/tx history, and
+    policy-redaction-aware provenance.'
+- id: run_graph_flow
+  name: Graph Flow Execution
+  description: Execute a workflow through the agent's graph orchestration engine
+events: []
+identity:
+  id_field: {}
+  title_field: {}
+  text_field: {}
+  updated_field: {}
+permissions:
+  acl_fields: []
+  tenant_field: null
+  read_roles: []
+schema_mappings:
+  DatasetVersion:
+    ontology_class: Dataset
+    fields: {}
+  SparkApplication:
+    ontology_class: null
+    fields: {}
+  SparkJob:
+    ontology_class: Action
+    fields: {}
+  Transform:
+    ontology_class: null
+    fields: {}
+  TransformRun:
+    ontology_class: null
+    fields: {}
+sync: []
+provenance:
+  generated_by: scripts/generate_connector_manifests.py
+  generated_at: '2026-08-27T02:22:03Z'
+  source_artifacts:
+  - spark_mcp/ontology/spark.ttl
+  integrity:
+    algorithm: urdna2015-sha256
+    hash: 4eab4ced58ca35687794b0b127b2b4b15f2d6e4e23954dc12c92eebe4f66c097
+    triple_count: 41
+  signer: UNSIGNED-PREVIEW
+  signature_algorithm: none
+  signing_public_key: ''
+  signature: null
+  source_commit: null
+policy:
+  pii_fields: {}
+  tenant_boundary: null
+  rls: []
+review_todos:
+- "policy.rls / policy.tenant_boundary are unset \u2014 no row-level-security predicate has been reviewed\
+  \ for this connector."
+- "schema_mappings.DatasetVersion.ontology_class = 'Dataset' [DRAFT \u2014 nearest hub-canonical-class-by-name\
+  \ heuristic (D16 residue; human sign-off required before use)] \u2014 verify manually before relying\
+  \ on this crosswalk for reasoning/joins."
+- "schema_mappings.SparkApplication.ontology_class = None [UNRESOLVED \u2014 no crosswalk found by any\
+  \ heuristic] \u2014 verify manually before relying on this crosswalk for reasoning/joins."
+- "schema_mappings.SparkJob.ontology_class = 'Action' [DRAFT \u2014 nearest hub-canonical-class-by-name\
+  \ heuristic (D16 residue; human sign-off required before use)] \u2014 verify manually before relying\
+  \ on this crosswalk for reasoning/joins."
+- "schema_mappings.Transform.ontology_class = None [UNRESOLVED \u2014 no crosswalk found by any heuristic]\
+  \ \u2014 verify manually before relying on this crosswalk for reasoning/joins."
+- "schema_mappings.TransformRun.ontology_class = None [UNRESOLVED \u2014 no crosswalk found by any heuristic]\
+  \ \u2014 verify manually before relying on this crosswalk for reasoning/joins."
+- "DEC-CA-07 typed Actions deferred: spark_submit_transform / spark_rerun_transform / spark_cancel are
+  mutating tools intended as typed OntologyActions (parameters/target_resource/conflict_policy/requires_approval)
+  per DEC-CA-07, but CA-32's ActionSpec schema extension has not merged onto agent-utilities main as of
+  this lane's build (2026-08-26) -- connector_manifest.py's ActionSpec is still the three-field
+  {id,name,description} shape, extra=forbid. Only the generated fleet-boilerplate actions (epistemic-answer,
+  run_graph_flow) are declared above. All three tools are fully implemented and gated today by the real
+  SPARK_ENABLE_TRANSFORMS client-side refusal (spark_mcp/api/api_client_spark.py::_require_transforms_enabled)
+  plus DEC-CA-07's fleet-intent dispatch_intent/_approval_satisfied_by_session_load gate -- see this
+  package's AGENTS.md 'ActionSpec / DEC-CA-07 status' section."
