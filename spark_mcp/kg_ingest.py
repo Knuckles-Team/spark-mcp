@@ -142,12 +142,18 @@ def map_transform_run_chain(
 
     app_entity = map_application(remote_url)
     job_entity = map_job(run_record)
-    transform_entity = map_transform(run_record["transform"], run_record.get("kind", "sql"))
+    transform_entity = map_transform(
+        run_record["transform"], run_record.get("kind", "sql")
+    )
     run_entity = map_transform_run(run_record)
 
     entities.extend([app_entity, job_entity, transform_entity, run_entity])
     relationships.append(
-        {"source": app_entity["id"], "target": job_entity["id"], "relationship": "hasJob"}
+        {
+            "source": app_entity["id"],
+            "target": job_entity["id"],
+            "relationship": "hasJob",
+        }
     )
     relationships.append(
         {"source": job_entity["id"], "target": run_entity["id"], "relationship": "runs"}
@@ -232,7 +238,9 @@ def register_ingest_tools(mcp: FastMCP) -> None:
         tags={"ingest", "mutating"},
     )
     async def spark_ingest_run(
-        run_id: str = Field(description="run_id of a recorded TransformRun (from spark_list_transform_runs)."),
+        run_id: str = Field(
+            description="run_id of a recorded TransformRun (from spark_list_transform_runs)."
+        ),
     ) -> dict[str, int]:
         """Push one TransformRun's SparkApplication->SparkJob->Transform->TransformRun
 

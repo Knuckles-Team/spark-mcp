@@ -30,8 +30,13 @@ def register_spark_tools(mcp: FastMCP) -> None:
     # ── session ───────────────────────────────────────────────────────────
     @mcp.tool(tags={"session"})
     async def spark_sql(
-        query: str = Field(description="SQL statement to execute, e.g. 'SELECT 1' or a lakehouse table read."),
-        row_limit: int = Field(default=1000, description="Max rows to return (result is truncated, not failed, past this)."),
+        query: str = Field(
+            description="SQL statement to execute, e.g. 'SELECT 1' or a lakehouse table read."
+        ),
+        row_limit: int = Field(
+            default=1000,
+            description="Max rows to return (result is truncated, not failed, past this).",
+        ),
     ) -> dict[str, Any]:
         """Execute one SQL statement over the live Spark Connect session.
 
@@ -43,7 +48,9 @@ def register_spark_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"session"})
     async def spark_describe(
-        table: str = Field(description="Fully-qualified table, e.g. 'lakehouse.analytics.trino_verify'."),
+        table: str = Field(
+            description="Fully-qualified table, e.g. 'lakehouse.analytics.trino_verify'."
+        ),
     ) -> dict[str, Any]:
         """Describe one table's schema over the live Spark session."""
         return get_client().describe(table)
@@ -59,7 +66,10 @@ def register_spark_tools(mcp: FastMCP) -> None:
         tags={"session", "mutating"},
     )
     async def spark_cancel(
-        tag: str = Field(default="", description="Interrupt only operations tagged with this value; empty interrupts ALL running operations on this session."),
+        tag: str = Field(
+            default="",
+            description="Interrupt only operations tagged with this value; empty interrupts ALL running operations on this session.",
+        ),
     ) -> dict[str, Any]:
         """Interrupt running Spark operation(s) on this session."""
         return get_client().cancel(tag or None)
@@ -76,10 +86,18 @@ def register_spark_tools(mcp: FastMCP) -> None:
         tags={"transforms", "mutating", "write"},
     )
     async def spark_submit_transform(
-        transform: str = Field(description="Transform name (stable identifier across reruns)."),
-        kind: Literal["sql", "pyspark"] = Field(description="'sql' runs `body` via spark.sql(); 'pyspark' evaluates a constrained DataFrame-API expression."),
-        body: str = Field(description="SQL text, or a single DataFrame-API expression for 'pyspark'."),
-        output_table: str = Field(description="Fully-qualified output table this Transform writes."),
+        transform: str = Field(
+            description="Transform name (stable identifier across reruns)."
+        ),
+        kind: Literal["sql", "pyspark"] = Field(
+            description="'sql' runs `body` via spark.sql(); 'pyspark' evaluates a constrained DataFrame-API expression."
+        ),
+        body: str = Field(
+            description="SQL text, or a single DataFrame-API expression for 'pyspark'."
+        ),
+        output_table: str = Field(
+            description="Fully-qualified output table this Transform writes."
+        ),
         output_mode: Literal["append", "overwrite", "create"] = Field(default="append"),
         inputs: list[dict[str, Any]] = Field(
             default_factory=list,
@@ -113,11 +131,17 @@ def register_spark_tools(mcp: FastMCP) -> None:
 
     @mcp.tool(tags={"transforms"})
     async def spark_list_transform_runs(
-        limit: int = Field(default=100, description="Max runs to return, most recent first."),
-        transform: str = Field(default="", description="Filter to one Transform name, or empty for all."),
+        limit: int = Field(
+            default=100, description="Max runs to return, most recent first."
+        ),
+        transform: str = Field(
+            default="", description="Filter to one Transform name, or empty for all."
+        ),
     ) -> dict[str, Any]:
         """List recorded TransformRuns (this package's own ledger — no Spark History Server exists)."""
-        return get_client().list_transform_runs(limit=limit, transform=transform or None)
+        return get_client().list_transform_runs(
+            limit=limit, transform=transform or None
+        )
 
     @mcp.tool(
         annotations={
@@ -130,7 +154,9 @@ def register_spark_tools(mcp: FastMCP) -> None:
         tags={"transforms", "mutating", "write"},
     )
     async def spark_rerun_transform(
-        run_id: str = Field(description="run_id of a prior TransformRun (from spark_list_transform_runs)."),
+        run_id: str = Field(
+            description="run_id of a prior TransformRun (from spark_list_transform_runs)."
+        ),
     ) -> dict[str, Any]:
         """Deterministically re-execute a prior TransformRun's manifest and pinned inputs.
 
@@ -141,7 +167,9 @@ def register_spark_tools(mcp: FastMCP) -> None:
     # ── catalog ───────────────────────────────────────────────────────────
     @mcp.tool(tags={"catalog"})
     async def spark_list_lakekeeper_tables(
-        namespace: str = Field(description="Namespace within the lakehouse catalog, e.g. 'analytics'."),
+        namespace: str = Field(
+            description="Namespace within the lakehouse catalog, e.g. 'analytics'."
+        ),
     ) -> dict[str, Any]:
         """List tables in one namespace of the shared `lakehouse` Iceberg catalog
 

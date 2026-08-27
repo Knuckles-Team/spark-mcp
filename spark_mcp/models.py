@@ -15,7 +15,9 @@ class DatasetVersionRef(BaseModel):
     lane's explicit Failure/idempotency invariant).
     """
 
-    table: str = Field(description="Fully-qualified table, e.g. 'lakehouse.analytics.trino_verify'.")
+    table: str = Field(
+        description="Fully-qualified table, e.g. 'lakehouse.analytics.trino_verify'."
+    )
     as_of_version: str | None = Field(
         default=None,
         description=(
@@ -28,7 +30,9 @@ class DatasetVersionRef(BaseModel):
 class TransformOutput(BaseModel):
     """The one table a Transform writes."""
 
-    table: str = Field(description="Fully-qualified output table, e.g. 'lakehouse.analytics.agg'.")
+    table: str = Field(
+        description="Fully-qualified output table, e.g. 'lakehouse.analytics.agg'."
+    )
     mode: Literal["append", "overwrite", "create"] = Field(
         default="append", description="Iceberg write mode for the output table."
     )
@@ -41,11 +45,21 @@ class TransformManifest(BaseModel):
     ``inputs[{table, as_of_version}]``, ``output{table}``.
     """
 
-    transform: str = Field(description="Transform name (stable identifier across reruns).")
-    kind: Literal["sql", "pyspark"] = Field(description="'sql' runs `body` via spark.sql(); 'pyspark' runs a constrained DataFrame-API expression.")
-    body: str = Field(description="SQL text ('sql') or a single DataFrame-API expression evaluated against `spark`/`inputs` ('pyspark').")
-    inputs: list[DatasetVersionRef] = Field(default_factory=list, description="Pinned input DatasetVersions.")
-    output: TransformOutput = Field(description="The output table this Transform writes.")
+    transform: str = Field(
+        description="Transform name (stable identifier across reruns)."
+    )
+    kind: Literal["sql", "pyspark"] = Field(
+        description="'sql' runs `body` via spark.sql(); 'pyspark' runs a constrained DataFrame-API expression."
+    )
+    body: str = Field(
+        description="SQL text ('sql') or a single DataFrame-API expression evaluated against `spark`/`inputs` ('pyspark')."
+    )
+    inputs: list[DatasetVersionRef] = Field(
+        default_factory=list, description="Pinned input DatasetVersions."
+    )
+    output: TransformOutput = Field(
+        description="The output table this Transform writes."
+    )
 
 
 class TransformRunRecord(BaseModel):

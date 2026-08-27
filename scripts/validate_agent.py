@@ -55,7 +55,9 @@ async def main() -> int:
 
         print("\nCalling spark_application_status()...")
         status_result = await client.call_tool("spark_application_status", {})
-        status_payload = status_result.data if hasattr(status_result, "data") else status_result
+        status_payload = (
+            status_result.data if hasattr(status_result, "data") else status_result
+        )
         print(json.dumps(status_payload, indent=2, default=str))
 
     print("\nOK: spark-mcp validated end-to-end through the MCP tool-call path.")

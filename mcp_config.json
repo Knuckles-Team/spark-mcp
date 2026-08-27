@@ -8,14 +8,19 @@
       ],
       "env": {
         "MCP_TOOL_MODE": "intent",
+        "INGESTTOOL": "True",
+        "SPARKTOOL": "True",
+        "SPARK_CONNECT_ATTACH_IDENTITY_TOKEN": "False",
         "SPARK_CONNECT_URL": "sc://spark-connect.apps.svc:15002",
-        "SPARK_SUBMIT_TIMEOUT_S": "300",
+        "SPARK_CONNECT_USE_SSL": "False",
+        "SPARK_ENABLE_TRANSFORMS": "False",
+        "SPARK_KEYCLOAK_REALM": "homelab",
+        "SPARK_KEYCLOAK_URL": "https://keycloak.arpa",
         "SPARK_LAKEHOUSE_CATALOG": "lakehouse",
         "SPARK_LAKEHOUSE_SCOPE": "lakekeeper",
-        "SPARK_ENABLE_TRANSFORMS": "False",
-        "SPARK_CONNECT_ATTACH_IDENTITY_TOKEN": "False",
-        "SPARK_CONNECT_USE_SSL": "False",
-        "SPARKTOOL": "True"
+        "SPARK_OAUTH_SCOPE": "lakekeeper",
+        "SPARK_SERVICE_CLIENT_ID": "spark-service",
+        "SPARK_SUBMIT_TIMEOUT_S": "300"
       }
     }
   }

@@ -106,7 +106,7 @@ def test_token_cache_reuses_unexpired_token(monkeypatch):
             calls["n"] += 1
             return {"access_token": f"tok-{calls['n']}", "expires_in": 300}
 
-    monkeypatch.setattr(auth_module.requests, "post", lambda *a, **k: _FakeResponse())
+    monkeypatch.setattr(auth_module.requests, "post", lambda *_, **__: _FakeResponse())
 
     first = auth_module.get_identity_token()
     second = auth_module.get_identity_token()

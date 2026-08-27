@@ -105,8 +105,12 @@ class _TokenCache:
 
         token = payload.get("access_token")
         if not token:
-            raise SparkApiError("Spark identity OAuth2 token response carried no access_token")
-        ttl = float(payload.get("expires_in", _DEFAULT_TOKEN_TTL_S) or _DEFAULT_TOKEN_TTL_S)
+            raise SparkApiError(
+                "Spark identity OAuth2 token response carried no access_token"
+            )
+        ttl = float(
+            payload.get("expires_in", _DEFAULT_TOKEN_TTL_S) or _DEFAULT_TOKEN_TTL_S
+        )
         self._token = token
         self._expires_at = now + ttl
 
@@ -156,12 +160,18 @@ def get_client() -> Api:
     egeria-mcp's ``EGERIA_ENABLE_WRITE``), and the identity-attach toggles
     documented in this module's docstring.
     """
-    attach_identity = str(setting("SPARK_CONNECT_ATTACH_IDENTITY_TOKEN", "false")).lower() in (
+    attach_identity = str(
+        setting("SPARK_CONNECT_ATTACH_IDENTITY_TOKEN", "false")
+    ).lower() in (
         "1",
         "true",
         "yes",
     )
-    use_ssl = str(setting("SPARK_CONNECT_USE_SSL", "false")).lower() in ("1", "true", "yes")
+    use_ssl = str(setting("SPARK_CONNECT_USE_SSL", "false")).lower() in (
+        "1",
+        "true",
+        "yes",
+    )
     enable_transforms = str(setting("SPARK_ENABLE_TRANSFORMS", "false")).lower() in (
         "1",
         "true",

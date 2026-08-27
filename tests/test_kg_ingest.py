@@ -64,7 +64,9 @@ def test_map_transform_run_chain_produces_full_relation_set():
         "rerun_of": None,
         "output_table": "lakehouse.analytics.out",
         "output_snapshot_id": "555",
-        "inputs": [{"table": "lakehouse.analytics.trino_verify", "as_of_version": "111"}],
+        "inputs": [
+            {"table": "lakehouse.analytics.trino_verify", "as_of_version": "111"}
+        ],
     }
     entities, rels = map_transform_run_chain(run_record, remote_url=_REMOTE_URL)
 
@@ -78,13 +80,22 @@ def test_map_transform_run_chain_produces_full_relation_set():
     }
 
     rel_names = {r["relationship"] for r in rels}
-    assert rel_names == {"hasJob", "runs", "executesTransform", "producedVersion", "consumedVersion"}
+    assert rel_names == {
+        "hasJob",
+        "runs",
+        "executesTransform",
+        "producedVersion",
+        "consumedVersion",
+    }
 
     produced = [r for r in rels if r["relationship"] == "producedVersion"][0]
     assert produced["target"] == "spark:DatasetVersion:lakehouse.analytics.out.555"
 
     consumed = [r for r in rels if r["relationship"] == "consumedVersion"][0]
-    assert consumed["target"] == "spark:DatasetVersion:lakehouse.analytics.trino_verify.111"
+    assert (
+        consumed["target"]
+        == "spark:DatasetVersion:lakehouse.analytics.trino_verify.111"
+    )
 
 
 def test_map_transform_run_chain_skips_unpinned_inputs():

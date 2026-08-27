@@ -26,7 +26,9 @@ from spark_mcp.api.api_client_spark import SparkApi
 class _FakeSession:
     version = "3.5.9"
 
-    def sql(self, query):  # pragma: no cover - never reached, transform is refused first
+    def sql(
+        self, query
+    ):  # pragma: no cover - never reached, transform is refused first
         raise AssertionError("submit_transform must refuse before touching Spark")
 
 
@@ -42,7 +44,9 @@ def _manifest():
 
 def test_submit_transform_denied_when_writes_disabled():
     """Known-bad demonstration: SPARK_ENABLE_TRANSFORMS unset -> denied, never executed."""
-    client = SparkApi(remote_url="sc://spark-connect.example:15002", enable_transforms=False)
+    client = SparkApi(
+        remote_url="sc://spark-connect.example:15002", enable_transforms=False
+    )
     client._session = _FakeSession()
 
     with pytest.raises(SparkApiError) as excinfo:
@@ -54,7 +58,9 @@ def test_submit_transform_denied_when_writes_disabled():
 
 
 def test_rerun_transform_denied_when_writes_disabled():
-    client = SparkApi(remote_url="sc://spark-connect.example:15002", enable_transforms=False)
+    client = SparkApi(
+        remote_url="sc://spark-connect.example:15002", enable_transforms=False
+    )
     client._session = _FakeSession()
 
     with pytest.raises(SparkApiError) as excinfo:
@@ -82,7 +88,9 @@ def test_submit_transform_allowed_once_enabled():
 
             return _Df()
 
-    client = SparkApi(remote_url="sc://spark-connect.example:15002", enable_transforms=True)
+    client = SparkApi(
+        remote_url="sc://spark-connect.example:15002", enable_transforms=True
+    )
     client._session = _AllowSession()
 
     record = client.submit_transform(_manifest())
@@ -106,7 +114,10 @@ def test_dispatch_intent_approval_gate_refuses_without_session_load():
     class _FakeMcp:
         _fleet_mux = _FakeMux()
 
-    assert _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform") is False
+    assert (
+        _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform")
+        is False
+    )
 
 
 def test_dispatch_intent_approval_gate_allows_after_session_load():
@@ -121,4 +132,7 @@ def test_dispatch_intent_approval_gate_allows_after_session_load():
     class _FakeMcp:
         _fleet_mux = _FakeMux()
 
-    assert _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform") is True
+    assert (
+        _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform")
+        is True
+    )

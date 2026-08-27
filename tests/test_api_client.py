@@ -108,7 +108,10 @@ def test_cancel_all_and_by_tag():
     client = _client_with_session(session)
 
     assert client.cancel(None) == {"interrupted_operation_ids": ["op-1"], "tag": None}
-    assert client.cancel("mytag") == {"interrupted_operation_ids": ["op-mytag"], "tag": "mytag"}
+    assert client.cancel("mytag") == {
+        "interrupted_operation_ids": ["op-mytag"],
+        "tag": "mytag",
+    }
 
 
 def test_submit_transform_refuses_when_disabled():

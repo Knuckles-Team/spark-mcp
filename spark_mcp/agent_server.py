@@ -31,7 +31,9 @@ def agent_server():
     global DEFAULT_AGENT_NAME, DEFAULT_AGENT_DESCRIPTION, DEFAULT_AGENT_SYSTEM_PROMPT
     initialize_workspace()
     meta = load_identity()
-    DEFAULT_AGENT_NAME = os.getenv("DEFAULT_AGENT_NAME", meta.get("name", "Spark Agent"))
+    DEFAULT_AGENT_NAME = os.getenv(
+        "DEFAULT_AGENT_NAME", meta.get("name", "Spark Agent")
+    )
     DEFAULT_AGENT_DESCRIPTION = os.getenv(
         "AGENT_DESCRIPTION",
         meta.get(
