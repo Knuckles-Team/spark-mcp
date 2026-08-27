@@ -1,0 +1,2 @@
+agent-utilities>=2.0.0,<3.0.0
+pyspark[connect]>=3.5.9,<3.6.0
