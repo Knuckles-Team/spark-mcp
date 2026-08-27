@@ -80,7 +80,7 @@ schema_mappings:
 sync: []
 provenance:
   generated_by: scripts/generate_connector_manifests.py
-  generated_at: '2026-08-27T02:22:03Z'
+  generated_at: '2026-08-27T02:41:56Z'
   source_artifacts:
   - spark_mcp/ontology/spark.ttl
   integrity:
@@ -91,7 +91,7 @@ provenance:
   signature_algorithm: none
   signing_public_key: ''
   signature: null
-  source_commit: null
+  source_commit: 9a07e79c710a9b8ad9473e79d083d78ed0d61422
 policy:
   pii_fields: {}
   tenant_boundary: null
@@ -111,12 +111,3 @@ review_todos:
   \ \u2014 verify manually before relying on this crosswalk for reasoning/joins."
 - "schema_mappings.TransformRun.ontology_class = None [UNRESOLVED \u2014 no crosswalk found by any heuristic]\
   \ \u2014 verify manually before relying on this crosswalk for reasoning/joins."
-- "DEC-CA-07 typed Actions deferred: spark_submit_transform / spark_rerun_transform / spark_cancel are
-  mutating tools intended as typed OntologyActions (parameters/target_resource/conflict_policy/requires_approval)
-  per DEC-CA-07, but CA-32's ActionSpec schema extension has not merged onto agent-utilities main as of
-  this lane's build (2026-08-26) -- connector_manifest.py's ActionSpec is still the three-field
-  {id,name,description} shape, extra=forbid. Only the generated fleet-boilerplate actions (epistemic-answer,
-  run_graph_flow) are declared above. All three tools are fully implemented and gated today by the real
-  SPARK_ENABLE_TRANSFORMS client-side refusal (spark_mcp/api/api_client_spark.py::_require_transforms_enabled)
-  plus DEC-CA-07's fleet-intent dispatch_intent/_approval_satisfied_by_session_load gate -- see this
-  package's AGENTS.md 'ActionSpec / DEC-CA-07 status' section."

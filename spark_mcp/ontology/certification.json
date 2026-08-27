@@ -1,7 +1,7 @@
 {
   "api_version": "graphos.io/v1",
   "artifacts": {
-    "connector_manifest.yml": "b991366851ff704971ba21fe03cd6e5b6e3a6edc99cc1831171fd420c4f76362",
+    "connector_manifest.yml": "0f7be3243c1aab2050c7a703d6ccbb9f6bf5615d7d81d9c9b2c70d153bb36582",
     "spark_mcp/ontology/fixtures/records.json": "86f0839be8474bac08fa89293c0460a4fa40aeac36c74e40d5f622c0908ccac9",
     "spark_mcp/ontology/mappings/source.yaml": "26aa76c1f6a9bfbe3a8e26189a56ba79f33c25a28842200033fb709e14e8232b",
     "spark_mcp/ontology/migrations/manifest.json": "93e208fc60518b50af098fb038c0803ca5fb97ffa9ee2a16d99531963d209c20",
@@ -30,5 +30,5 @@
   "signer": "UNSIGNED-PREVIEW",
   "signing_public_key": "",
   "status": "source-validated",
-  "validated_at": "2026-08-27T02:22:03Z"
+  "validated_at": "2026-08-27T02:41:56Z"
 }
