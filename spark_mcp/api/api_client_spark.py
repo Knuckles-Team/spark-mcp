@@ -34,6 +34,8 @@ package can fix — recorded in this package's AGENTS.md, not silently worked ar
 
 from __future__ import annotations
 
+import logging
+import re
 import threading
 import uuid
 from datetime import UTC, datetime
@@ -47,7 +49,25 @@ from spark_mcp.api.api_client_base import (
 
 __all__ = ["SparkApi", "SparkApiError"]
 
+logger = logging.getLogger(__name__)
+
 _DEFAULT_TRANSFORM_RUN_LIMIT = 100
+
+# Iceberg/Spark table reference: 1-3 dot-separated identifier segments
+# (catalog.namespace.table), each a plain word. Used to validate any table
+# reference interpolated into a SQL string before it is sent to Spark Connect
+# — Spark SQL has no parameter-binding for identifiers, so allow-list
+# validation is the mitigation (not string escaping).
+_SAFE_TABLE_REF = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*(\.[A-Za-z_][A-Za-z0-9_]*){0,2}$")
+
+
+def _require_safe_table_ref(table: str) -> str:
+    if not _SAFE_TABLE_REF.match(table):
+        raise SparkApiError(
+            f"refusing to build SQL against an unsafe table reference: {table!r}",
+            kind="job_failed",
+        )
+    return table
 
 
 class SparkApi:
@@ -136,7 +156,8 @@ class SparkApi:
             # config documents the same invariant and is a harmless no-op if the
             # Connect protocol ignores a static-catalog conf set post-startup.
             builder = builder.config(
-                f"spark.sql.catalog.{self.lakehouse_catalog}.scope", self.lakehouse_scope
+                f"spark.sql.catalog.{self.lakehouse_catalog}.scope",
+                self.lakehouse_scope,
             )
             try:
                 session = builder.getOrCreate()
@@ -154,7 +175,11 @@ class SparkApi:
                 try:
                     self._session.stop()
                 except Exception:  # noqa: BLE001 - best-effort teardown
-                    pass
+                    logger.debug(
+                        "SparkApi.close(): session.stop() failed; "
+                        "discarding the session anyway (best-effort teardown).",
+                        exc_info=True,
+                    )
                 self._session = None
 
     # ── session tool group ───────────────────────────────────────────────
@@ -212,7 +237,11 @@ class SparkApi:
     # ── catalog tool group ───────────────────────────────────────────────
     def list_lakekeeper_tables(self, namespace: str) -> dict[str, Any]:
         result = self.sql(f"SHOW TABLES IN {self.lakehouse_catalog}.{namespace}")
-        return {"namespace": namespace, "tables": result["rows"], "count": result["row_count"]}
+        return {
+            "namespace": namespace,
+            "tables": result["rows"],
+            "count": result["row_count"],
+        }
 
     # ── transforms tool group ────────────────────────────────────────────
     def _require_transforms_enabled(self) -> None:
@@ -245,13 +274,18 @@ class SparkApi:
         transform's own success/failure signal.
         """
         try:
-            result = self.sql(f"SELECT snapshot_id FROM {table}.snapshots ORDER BY committed_at DESC LIMIT 1")
+            table = _require_safe_table_ref(table)
+            result = self.sql(
+                f"SELECT snapshot_id FROM {table}.snapshots ORDER BY committed_at DESC LIMIT 1"
+            )
             rows = result.get("rows") or []
             return str(rows[0]["snapshot_id"]) if rows else None
         except (SparkApiError, KeyError, IndexError, TypeError):
             return None
 
-    def submit_transform(self, manifest: dict[str, Any], *, rerun_of: str | None = None) -> dict[str, Any]:
+    def submit_transform(
+        self, manifest: dict[str, Any], *, rerun_of: str | None = None
+    ) -> dict[str, Any]:
         """Execute one Transform manifest, recording a TransformRun (success or typed failure).
 
         SQL transforms run via ``spark.sql(body)`` with every declared input rewritten
@@ -287,7 +321,9 @@ class SparkApi:
             if kind == "sql":
                 sql_text = body
                 for ref in inputs:
-                    sql_text = sql_text.replace(ref["table"], self._versioned_select(ref))
+                    sql_text = sql_text.replace(
+                        ref["table"], self._versioned_select(ref)
+                    )
                 result = self.sql(sql_text)
                 row_count = result["row_count"]
             elif kind == "pyspark":
@@ -296,7 +332,9 @@ class SparkApi:
                 for ref in inputs:
                     alias = ref["table"].rsplit(".", 1)[-1]
                     namespace[alias] = session.table(self._versioned_select(ref))
-                df = eval(body, {"__builtins__": {}}, namespace)  # noqa: S307 - constrained namespace, write-gated + approval-gated
+                df = eval(
+                    body, {"__builtins__": {}}, namespace
+                )  # noqa: S307 - constrained namespace, write-gated + approval-gated
                 row_count = df.count()
                 mode = output.get("mode", "append")
                 writer = df.write.format("iceberg")
@@ -307,7 +345,9 @@ class SparkApi:
                 else:
                     writer.mode("append").saveAsTable(output["table"])
             else:
-                raise SparkApiError(f"unknown transform kind {kind!r}", kind="job_failed")
+                raise SparkApiError(
+                    f"unknown transform kind {kind!r}", kind="job_failed"
+                )
 
             record["status"] = "succeeded"
             record["row_count"] = row_count
@@ -347,7 +387,9 @@ class SparkApi:
         self._require_transforms_enabled()
         original = self._runs.get(run_id)
         if original is None:
-            raise SparkApiError(f"no TransformRun found for run_id={run_id!r}", kind="job_failed")
+            raise SparkApiError(
+                f"no TransformRun found for run_id={run_id!r}", kind="job_failed"
+            )
         return self.submit_transform(original["manifest"], rerun_of=run_id)
 
     def _store_run(self, record: dict[str, Any]) -> None:
@@ -355,10 +397,16 @@ class SparkApi:
             self._runs[record["run_id"]] = record
             self._run_order.append(record["run_id"])
 
-    def list_transform_runs(self, *, limit: int = _DEFAULT_TRANSFORM_RUN_LIMIT, transform: str | None = None) -> dict[str, Any]:
+    def list_transform_runs(
+        self, *, limit: int = _DEFAULT_TRANSFORM_RUN_LIMIT, transform: str | None = None
+    ) -> dict[str, Any]:
         with self._lock:
             ids = list(reversed(self._run_order))
-        records = [self._runs[i] for i in ids if transform is None or self._runs[i]["transform"] == transform]
+        records = [
+            self._runs[i]
+            for i in ids
+            if transform is None or self._runs[i]["transform"] == transform
+        ]
         page = records[:limit]
         return {"runs": page, "count": len(page), "total": len(records)}
 
