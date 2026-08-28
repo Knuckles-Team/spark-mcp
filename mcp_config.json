@@ -15,7 +15,7 @@
         "SPARK_CONNECT_USE_SSL": "False",
         "SPARK_ENABLE_TRANSFORMS": "False",
         "SPARK_KEYCLOAK_REALM": "homelab",
-        "SPARK_KEYCLOAK_URL": "https://keycloak.arpa",
+        "SPARK_KEYCLOAK_URL": "http://localhost:8080",
         "SPARK_LAKEHOUSE_CATALOG": "lakehouse",
         "SPARK_LAKEHOUSE_SCOPE": "lakekeeper",
         "SPARK_OAUTH_SCOPE": "lakekeeper",

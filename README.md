@@ -1,9 +1,32 @@
-# spark-mcp
+# Spark Mcp
+## CLI or API | MCP | Agent
 
-A Model Context Protocol (MCP) server, A2A agent, and API client for Spark Connect
-(the Iceberg lakehouse transform/query surface) integration.
-
+![PyPI - Version](https://img.shields.io/pypi/v/spark-mcp)
 ![MCP Server](https://badge.mcpx.dev?type=server 'MCP Server')
+![PyPI - Downloads](https://img.shields.io/pypi/dd/spark-mcp)
+![GitHub Repo stars](https://img.shields.io/github/stars/Knuckles-Team/spark-mcp)
+![GitHub forks](https://img.shields.io/github/forks/Knuckles-Team/spark-mcp)
+![GitHub contributors](https://img.shields.io/github/contributors/Knuckles-Team/spark-mcp)
+![PyPI - License](https://img.shields.io/pypi/l/spark-mcp)
+![GitHub](https://img.shields.io/github/license/Knuckles-Team/spark-mcp)
+![GitHub last commit (by committer)](https://img.shields.io/github/last-commit/Knuckles-Team/spark-mcp)
+![GitHub pull requests](https://img.shields.io/github/issues-pr/Knuckles-Team/spark-mcp)
+![GitHub closed pull requests](https://img.shields.io/github/issues-pr-closed/Knuckles-Team/spark-mcp)
+![GitHub issues](https://img.shields.io/github/issues/Knuckles-Team/spark-mcp)
+![GitHub top language](https://img.shields.io/github/languages/top/Knuckles-Team/spark-mcp)
+![GitHub language count](https://img.shields.io/github/languages/count/Knuckles-Team/spark-mcp)
+![GitHub repo size](https://img.shields.io/github/repo-size/Knuckles-Team/spark-mcp)
+![GitHub repo file count (file type)](https://img.shields.io/github/directory-file-count/Knuckles-Team/spark-mcp)
+![PyPI - Wheel](https://img.shields.io/pypi/wheel/spark-mcp)
+![PyPI - Implementation](https://img.shields.io/pypi/implementation/spark-mcp)
+
+*Version: 0.1.0*
+
+> **Documentation** — Installation, deployment, and usage across the API, CLI, MCP,
+> and A2A agent interfaces are maintained in the
+> [official documentation](https://knuckles-team.github.io/spark-mcp/).
+
+---
 
 ## Table of Contents
 - [Overview](#overview)
@@ -124,7 +147,7 @@ matching the fleet's one-registration-call convention. `kg_ingest.py` exposes
 | `SPARK_SERVICE_CLIENT_SECRET` | secret-injected |  |
 | `SPARK_OAUTH_SCOPE` | `lakekeeper` |  |
 | `SPARK_OAUTH_TOKEN_URL` | secret-injected |  |
-| `SPARK_KEYCLOAK_URL` | `https://keycloak.arpa` |  |
+| `SPARK_KEYCLOAK_URL` | `http://localhost:8080` |  |
 | `SPARK_KEYCLOAK_REALM` | `homelab` |  |
 | `SPARKTOOL` | `True` |  |
 | `INGESTTOOL` | `True` |  |
@@ -224,3 +247,61 @@ See [.env.example](.env.example) for the full template.
 
 _1 action-routed tool(s) · 12 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
 <!-- MCP-TOOLS-TABLE:END -->
+
+---
+
+## Repository Owners
+
+<img width="100%" height="180em" src="https://github-readme-stats.vercel.app/api?username=example&show_icons=true&hide_border=true&&count_private=true&include_all_commits=true" />
+
+![GitHub followers](https://img.shields.io/github/followers/example)
+![GitHub User's stars](https://img.shields.io/github/stars/example)
+
+---
+
+## Contribute
+
+Contributions are welcome! Please ensure code quality by executing local checks before submitting pull requests:
+- Format code using `ruff format .`
+- Lint code using `ruff check .`
+- Validate type-safety with `mypy .`
+- Execute test suites using `pytest`
+
+
+<!-- BEGIN agent-utilities-deployment (generated; do not edit between markers) -->
+
+## Deploy with `agent-utilities-deployment`
+
+Provision this package with the consolidated **`agent-utilities-deployment`**
+workflow. It selects an installed-package, editable-source, or immutable-container
+path; records only runtime secret and TLS-profile references in `AgentConfig`; and
+runs doctor, registration, policy, observability, and rollback gates. Ask your agent
+to **"deploy `spark-mcp` with agent-utilities-deployment"**.
+
+| Install mode | Command |
+|------|---------|
+| Installed package | `uv tool install "spark-mcp[mcp]"`, then run `spark-mcp` |
+| Editable source | `uv pip install -e ".[agent]"`, then run `spark-mcp` |
+| Immutable container | deploy `registry.example.invalid/spark-mcp@sha256:<digest>` through the operator-selected orchestrator |
+
+The repository embeds no deployment profile, credential value, certificate path, or
+environment-specific endpoint. Supply those at runtime through `AgentConfig` and the
+configured secret provider.
+
+<!-- END agent-utilities-deployment -->
+
+<!-- GOVERNED-CAPABILITY:START -->
+## Governed capability contract
+
+This package ships a compact canonical skill surface with specialist procedures
+kept as referenced workflows. The current MCP tools, skill metadata,
+`connector_manifest.yml`, ontology, mappings, shapes, fixtures, migrations,
+tool-schema fingerprints, and certification metadata form one versioned
+capability contract. Validate them together; do not rely on stale tool names or
+historical per-task skill wrappers.
+
+Runtime endpoints, credentials, certificate trust, tenant identity, retention,
+and observability policy are deployment inputs and are never packaged values.
+See [Configuration, trust, and privacy](docs/configuration.md) before enabling a
+network transport, connector ingestion, GraphOS delegation, or trace export.
+<!-- GOVERNED-CAPABILITY:END -->

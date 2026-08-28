@@ -125,7 +125,7 @@ def _token_cache() -> _TokenCache:
         if _cache is not None:
             return _cache
         token_url = setting("SPARK_OAUTH_TOKEN_URL", "") or (
-            setting("SPARK_KEYCLOAK_URL", "https://keycloak.arpa").rstrip("/")
+            setting("SPARK_KEYCLOAK_URL", "http://localhost:8080").rstrip("/")
             + f"/realms/{setting('SPARK_KEYCLOAK_REALM', 'homelab')}"
             + "/protocol/openid-connect/token"
         )
