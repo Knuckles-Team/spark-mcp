@@ -12,7 +12,7 @@
 | `SPARK_SERVICE_CLIENT_ID` / `SPARK_SERVICE_CLIENT_SECRET` | — | Keycloak client-credentials, minted even when attach is disabled |
 | `SPARK_OAUTH_SCOPE` | `lakekeeper` | OAuth2 scope for the identity token mint |
 | `SPARK_OAUTH_TOKEN_URL` | derived from `SPARK_KEYCLOAK_URL`/`SPARK_KEYCLOAK_REALM` | Full override |
-| `SPARK_KEYCLOAK_URL` | `https://keycloak.arpa` | |
+| `SPARK_KEYCLOAK_URL` | `http://localhost:8080` | |
 | `SPARK_KEYCLOAK_REALM` | `homelab` | |
 | `SPARKTOOL` | `True` | Tool-surface toggle |
 | `INGESTTOOL` | `True` | Tool-surface toggle |
