@@ -129,7 +129,16 @@ def register_spark_tools(mcp: FastMCP) -> None:
         ).model_dump()
         return get_client().submit_transform(manifest)
 
-    @mcp.tool(tags={"transforms"})
+    @mcp.tool(
+        annotations={
+            "title": "List Spark Transform Runs",
+            "readOnlyHint": True,
+            "destructiveHint": False,
+            "idempotentHint": True,
+            "openWorldHint": True,
+        },
+        tags={"transforms"},
+    )
     async def spark_list_transform_runs(
         limit: int = Field(
             default=100, description="Max runs to return, most recent first."
