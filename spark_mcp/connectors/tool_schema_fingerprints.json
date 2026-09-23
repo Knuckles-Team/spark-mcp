@@ -1,0 +1,8 @@
+{
+  "algorithm": "agent-connector-sdk:mcp-tool-contract-compat:v2",
+  "connector": "spark-mcp",
+  "schema_version": "1",
+  "tools": {
+    "spark_list_transform_runs": "4e02a3a071a6e2294f75c4167abb5c7046782f7d22363c159d72ffd5c5f9bfa7"
+  }
+}

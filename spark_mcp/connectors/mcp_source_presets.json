@@ -1,0 +1,14 @@
+{
+  "_comment": "Tier-1 mcp_tool source preset for spark-mcp (AU-KG.ingest.mcp-tool-connector). Syncs the recorded TransformRun ledger into the KG via the spark-mcp MCP server. spark_list_transform_runs is the only read-only spark_* tool with no required arguments (limit defaults to 100, transform is an optional name filter) -- spark_list_lakekeeper_tables requires a namespace the sync pipeline has no way to supply, spark_sql/spark_submit_transform/spark_rerun_transform mutate or need a caller-supplied query/manifest, and spark_lineage_config/spark_application_status return a single status object, not a list of records. Contributed presets win over the central MCP_TOOL_PRESETS.",
+  "spark-transform-runs": {
+    "server": "spark-mcp",
+    "tool": "spark_list_transform_runs",
+    "params_style": "args",
+    "records_path": "runs",
+    "id_field": "run_id",
+    "title_field": "transform",
+    "text_field": "output_table",
+    "updated_field": "submitted_at",
+    "doc_type": "spark_transform_run"
+  }
+}

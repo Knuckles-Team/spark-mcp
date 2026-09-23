@@ -77,7 +77,11 @@ schema_mappings:
   TransformRun:
     ontology_class: null
     fields: {}
-sync: []
+sync:
+- preset: spark-transform-runs
+  server: spark-mcp
+  tool: spark_list_transform_runs
+  tool_schema_sha256: 4e02a3a071a6e2294f75c4167abb5c7046782f7d22363c159d72ffd5c5f9bfa7
 provenance:
   generated_by: scripts/generate_connector_manifests.py
   generated_at: '2026-08-27T02:41:56Z'
