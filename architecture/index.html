@@ -652,7 +652,7 @@
 a gRPC protocol — <code>spark_mcp/api/api_client_spark.py</code>'s <code>SparkApi</code> wraps
 <code>pyspark.sql.connect.session.SparkSession.builder.remote("sc://spark-connect.apps.svc:15002")</code>
 rather than an HTTP <code>requests.Session</code>. <code>spark_mcp/api/api_client_base.py</code> carries
-only the one thing every fleet client needs regardless of transport: a typed,
+only the one thing every fleet client needs in either case of transport: a typed,
 non-degrading <code>SparkApiError</code> with a <code>kind</code> (<code>unreachable</code> / <code>job_failed</code> /
 <code>session_evicted</code> / <code>disabled</code>) so a caller can distinguish "Spark Connect is down"
 from "the query itself failed" from "the write gate is closed" — never collapsing
