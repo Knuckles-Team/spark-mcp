@@ -6,7 +6,7 @@ Unlike most of the fleet's connectors (`lakekeeper_mcp`, `jena_mcp`), Spark Conn
 a gRPC protocol — `spark_mcp/api/api_client_spark.py`'s `SparkApi` wraps
 `pyspark.sql.connect.session.SparkSession.builder.remote("sc://spark-connect.apps.svc:15002")`
 rather than an HTTP `requests.Session`. `spark_mcp/api/api_client_base.py` carries
-only the one thing every fleet client needs regardless of transport: a typed,
+only the one thing every fleet client needs in either case of transport: a typed,
 non-degrading `SparkApiError` with a `kind` (`unreachable` / `job_failed` /
 `session_evicted` / `disabled`) so a caller can distinguish "Spark Connect is down"
 from "the query itself failed" from "the write gate is closed" — never collapsing

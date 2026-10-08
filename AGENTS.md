@@ -70,7 +70,7 @@
   job," not full `spark-submit` packaging (out of this lane's scope; see
   `services/spark/AGENTS.md`'s own "revisit with the operator instead" boundary).
 - Every write path (`spark_submit_transform`/`spark_rerun_transform`) is gated
-  client-side by `SPARK_ENABLE_TRANSFORMS` (refuses, not silently executes, when
+  client-side by `SPARK_ENABLE_TRANSFORMS` (refuses, not silently runs, when
   unset) — the same real mechanism as `egeria-mcp`'s `EGERIA_ENABLE_WRITE`
   (`api_client_spark.py::_require_transforms_enabled`), beneath DEC-CA-07's
   fleet-intent approval layer (`dispatch_intent` ->
@@ -128,12 +128,12 @@ config, docs, lockfiles). The only hidden directories allowed at root are
 `~/workspace/reports/` (command output); tests go in `tests/` (pytest).
 Before finishing a task, run `git status` and confirm no stray root files were added.
 
-## Working Discipline — think, simplify, stay surgical, verify
+## Working Discipline — think, simplify, stay surgical, check
 - **Think before coding.** State assumptions explicitly; surface options rather
   than silently picking one.
 - **Simplicity first.** Minimum code that solves the stated problem.
 - **Stay surgical.** Every changed line traces to the task.
-- **Verify against a goal.** Prove behavior with a real call against the live
+- **Check against a goal.** Prove behavior with a real call against the live
   Spark Connect deployment, not a mock alone.
 
 ## Quality Bar — Leave the Codebase Clean (REQUIRED)
