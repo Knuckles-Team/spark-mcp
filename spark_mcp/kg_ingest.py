@@ -9,12 +9,12 @@ AGENTS.md) into the epistemic-graph engine as typed OWL nodes (``:SparkApplicati
 ``hasJob``/``runs``/``executesTransform``/``producedVersion``/``consumedVersion``
 relations.
 
-The txn write path is the required
-``agent_utilities.knowledge_graph.memory.native_ingest`` authority — never a bespoke
-write path. Node ids follow ``spark:<class>:<externalId>``; ``node_type`` on each
-entity matches a class federated by ``spark_mcp.ontology`` (``spark.ttl``). Batches
-at ≤500 entities per ``ingest_entities`` call (egeria-mcp's convention). Raises
-``NativeIngestError`` rather than silently acking a partial batch.
+The txn write path is the required ``agent_connector_sdk.ingest`` knowledge-ingest
+facade (``KnowledgeIngest``/``current_ingest``) — never a bespoke write path. Node
+ids follow ``spark:<class>:<externalId>``; ``node_type`` on each entity matches a
+class federated by ``spark_mcp.ontology`` (``spark.ttl``). Batches at ≤500 entities
+per ``ingest_entities`` call (egeria-mcp's convention). Raises ``IngestError``
+rather than silently acking a partial batch.
 """
 
 from __future__ import annotations
@@ -23,35 +23,64 @@ import logging
 from typing import Any
 from urllib.parse import urlparse
 
-from agent_utilities.knowledge_graph.memory.native_ingest import (
-    ingest_entities as _native_ingest_entities,
+from agent_connector_sdk.ingest import (
+    ChangeSet,
+    Entity,
+    IngestBinding,
+    IngestError,
+    KnowledgeIngest,
+    Relationship,
+    current_ingest,
 )
 from fastmcp import FastMCP
 from pydantic import Field
 
 logger = logging.getLogger("spark_mcp.kg")
 
-_SOURCE = "spark-mcp"
-_DOMAIN = "spark"
+_BINDING = IngestBinding(connector="spark-mcp", stream="spark")
 _BATCH_SIZE = 500
 
 
-def ingest_entities(
+def _to_entity(record: dict[str, Any]) -> Entity:
+    return Entity(
+        id=record.get("id"),
+        node_type=record.get("node_type"),
+        properties={
+            k: v for k, v in record.items() if k not in ("id", "node_type")
+        },
+    )
+
+
+def _to_relationship(record: dict[str, Any]) -> Relationship:
+    props = {
+        k: v
+        for k, v in record.items()
+        if k not in ("source", "target", "relationship")
+    }
+    return Relationship(
+        source=record["source"],
+        target=record["target"],
+        relationship=record["relationship"],
+        properties=props or None,
+    )
+
+
+async def ingest_entities(
     entities: list[dict[str, Any]],
     relationships: list[dict[str, Any]] | None = None,
     *,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
-    """Write canonical typed nodes and relationships through native ingestion."""
-    return _native_ingest_entities(
-        entities,
-        relationships,
-        source=_SOURCE,
-        domain=_DOMAIN,
-        client=client,
-        graph=graph,
+    """Write canonical typed nodes and relationships through the EG ingest client."""
+    if not entities:
+        raise IngestError("ingest_entities needs at least one entity")
+    change_set = ChangeSet(
+        entities=tuple(_to_entity(e) for e in entities),
+        relationships=tuple(_to_relationship(r) for r in relationships or ()),
     )
+    service = ingest or current_ingest()
+    receipt = await service.submit(_BINDING, change_set)
+    return {"nodes": receipt.affected_count, "edges": receipt.relationship_count}
 
 
 # ── record → entity/relationship mappers ─────────────────────────────────────
@@ -197,12 +226,11 @@ def map_transform_run_chain(
     return entities, relationships
 
 
-def ingest_run(
+async def ingest_run(
     run_record: dict[str, Any],
     *,
     remote_url: str,
-    client: Any | None = None,
-    graph: str | None = None,
+    ingest: KnowledgeIngest | None = None,
 ) -> dict[str, int]:
     """Push one TransformRun's full chain into the KG. Never partially commits."""
     entities, relationships = map_transform_run_chain(run_record, remote_url=remote_url)
@@ -211,14 +239,14 @@ def ingest_run(
     total_edges = 0
     for start in range(0, len(entities), _BATCH_SIZE):
         batch = entities[start : start + _BATCH_SIZE]
-        res = ingest_entities(batch, None, client=client, graph=graph)
+        res = await ingest_entities(batch, None, ingest=ingest)
         total_nodes += res.get("nodes", 0)
 
     if relationships:
         anchor = entities[0]
         for start in range(0, len(relationships), _BATCH_SIZE):
             batch = relationships[start : start + _BATCH_SIZE]
-            res = ingest_entities([anchor], batch, client=client, graph=graph)
+            res = await ingest_entities([anchor], batch, ingest=ingest)
             total_edges += res.get("edges", 0)
 
     return {"nodes": total_nodes, "edges": total_edges, "run_id": run_record["run_id"]}
@@ -245,7 +273,7 @@ def register_ingest_tools(mcp: FastMCP) -> None:
         """Push one TransformRun's SparkApplication->SparkJob->Transform->TransformRun
 
         ->DatasetVersion chain into the KG as typed OWL nodes. Never partially
-        commits — ``native_ingest`` raises ``NativeIngestError`` rather than
+        commits — the EG ingest client raises ``IngestError`` rather than
         silently acking a partial batch.
         """
         from spark_mcp.auth import get_client
@@ -255,4 +283,4 @@ def register_ingest_tools(mcp: FastMCP) -> None:
         run_record = next((r for r in result["runs"] if r["run_id"] == run_id), None)
         if run_record is None:
             raise ValueError(f"no TransformRun found for run_id={run_id!r}")
-        return ingest_run(run_record, remote_url=api.remote_url)
+        return await ingest_run(run_record, remote_url=api.remote_url)

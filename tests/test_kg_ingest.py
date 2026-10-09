@@ -1,6 +1,12 @@
 """Record -> OWL entity/relationship mapping for the Spark KG ingest tool."""
 
+from types import SimpleNamespace
+
+import pytest
+from agent_connector_sdk.ingest import IngestError, KnowledgeIngest
+
 from spark_mcp.kg_ingest import (
+    ingest_entities,
     map_application,
     map_dataset_version,
     map_job,
@@ -10,6 +16,52 @@ from spark_mcp.kg_ingest import (
 )
 
 _REMOTE_URL = "sc://spark-connect.apps.svc:15002"
+
+
+class _FakeTransport:
+    """Fakes the transport boundary below KnowledgeIngest, per the fleet SDK
+    migration recipe's ingestion test-double pattern — the SDK's own request
+    builder/validation still runs on top of this.
+    """
+
+    def __init__(self):
+        self.requests = []
+
+    async def source_status(self, connector, stream):
+        return SimpleNamespace(accepted_checkpoint=None)
+
+    async def submit(self, request):
+        self.requests.append(request)
+        return SimpleNamespace(
+            affected_count=len(request.records),
+            relationship_count=len(request.relationships),
+        )
+
+    async def store_blob(self, data):
+        raise AssertionError("spark-mcp ingestion carries no media")
+
+
+@pytest.fixture
+def ingest():
+    transport = _FakeTransport()
+    return KnowledgeIngest(transport, loop=None), transport
+
+
+async def test_ingest_entities_submits_through_the_sdk(ingest):
+    service, transport = ingest
+    entity = map_application(_REMOTE_URL)
+
+    result = await ingest_entities([entity], ingest=service)
+
+    assert result == {"nodes": 1, "edges": 0}
+    assert len(transport.requests) == 1
+    assert transport.requests[0].records[0].record_id == entity["id"]
+
+
+async def test_ingest_entities_rejects_an_empty_batch(ingest):
+    service, _transport = ingest
+    with pytest.raises(IngestError):
+        await ingest_entities([], ingest=service)
 
 
 def test_map_application_id_is_stable():

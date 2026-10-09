@@ -20,18 +20,18 @@ refuses to attach it over a plaintext channel rather than silently downgrading.
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from typing import Any
 
 import requests
-from agent_utilities.base_utilities import get_logger
-from agent_utilities.core.config import setting
+from agent_connector_sdk.config import setting
 
 from spark_mcp.api.api_client_base import SparkApiError
 from spark_mcp.api_client import Api
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 _EXPIRY_SKEW_S = 15.0
 _DEFAULT_TOKEN_TTL_S = 60.0
