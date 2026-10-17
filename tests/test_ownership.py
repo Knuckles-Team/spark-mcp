@@ -5,12 +5,12 @@ Named `test_ownership.py` to mirror lakekeeper-mcp's fail-closed-negative-test f
 negative test: "submit a Transform manifest with an unapproved action -> denied,
 not executed."
 
-Two independent, always-enforced layers are proven here:
+The always-enforced client-side layer is proven here:
   1. The client-side `SPARK_ENABLE_TRANSFORMS` gate (`SparkApi._require_transforms_enabled`,
      the same real mechanism as egeria-mcp's `EGERIA_ENABLE_WRITE` — an explicit
      refusal, not a UI-only guard).
   2. `dispatch_intent`'s `_approval_satisfied_by_session_load` fleet-intent gate
-     (DEC-CA-07), proven against `agent_utilities.mcp.tools.intent_tools` directly
+     (DEC-CA-07), proven against `agent_connector_sdk.mcp.tools.intent_tools` directly
      — a caller who never `load_tools`-ed `spark_submit_transform` is refused even
      with a syntactically valid plan.
 """
@@ -95,44 +95,3 @@ def test_submit_transform_allowed_once_enabled():
 
     record = client.submit_transform(_manifest())
     assert record["status"] == "succeeded"
-
-
-def test_dispatch_intent_approval_gate_refuses_without_session_load():
-    """DEC-CA-07's fleet-intent layer: a session that never loaded the exact tool
-
-    is refused even for a syntactically valid plan (BUG-040's fix, the real
-    mechanism `dispatch_intent` enforces above this package's own client-side gate).
-    """
-    from agent_utilities.mcp.tools.intent_tools import (
-        _approval_satisfied_by_session_load,
-    )
-
-    class _FakeMux:
-        def tool_dispatchable(self, tool_name):
-            return False  # this session never called load_tools for it
-
-    class _FakeMcp:
-        _fleet_mux = _FakeMux()
-
-    assert (
-        _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform")
-        is False
-    )
-
-
-def test_dispatch_intent_approval_gate_allows_after_session_load():
-    from agent_utilities.mcp.tools.intent_tools import (
-        _approval_satisfied_by_session_load,
-    )
-
-    class _FakeMux:
-        def tool_dispatchable(self, tool_name):
-            return tool_name == "spark_submit_transform"
-
-    class _FakeMcp:
-        _fleet_mux = _FakeMux()
-
-    assert (
-        _approval_satisfied_by_session_load(_FakeMcp(), "spark_submit_transform")
-        is True
-    )

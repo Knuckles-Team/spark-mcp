@@ -74,7 +74,7 @@
     rdfs:label "Spark Connect Ontology" ;
     rdfs:comment """Spark Connect job/transform/lineage topology — applications, jobs,
     versioned Transform manifests, their runs, and the pinned Iceberg
-    DatasetVersions they consume/produce — federated into the agent-utilities
+    DatasetVersions they consume/produce — federated into the agent-connector-sdk
     knowledge-graph hub. Spark Connect is live on spark-connect.apps.svc:15002
     (the spark-runner pod's Connect endpoint), proven with a real
     pyspark.sql.connect session against the deployed lakehouse.""" ;
