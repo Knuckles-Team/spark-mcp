@@ -44,14 +44,31 @@ from spark_mcp.api.api_client_base import (
     LAKEHOUSE_CATALOG_SCOPE,
     SparkApiError,
 )
+from spark_mcp.models import TransformManifest
 
-__all__ = ["SparkApi", "SparkApiError"]
+__all__ = ["SparkApi", "SparkApiError", "SparkConnectBase"]
 
 _DEFAULT_TRANSFORM_RUN_LIMIT = 100
 
 
-class SparkApi:
-    """Authenticated-when-possible Spark Connect client + in-process TransformRun ledger.
+def _verb(method: str):
+    """Declare the HTTP-equivalent verb the SDK derives tool annotations from.
+
+    GET is read-only; DELETE is destructive and idempotent; POST is a write.
+    """
+
+    def mark(function):
+        function.__http_method__ = method
+        return function
+
+    return mark
+
+
+class SparkConnectBase:
+    """Session lifecycle and the TransformRun ledger behind :class:`SparkApi`.
+
+    Base infrastructure, not operations: its public ``get_session`` and ``close``
+    are never served as MCP tools (the SDK skips ``*Base`` classes).
 
     No Spark History Server exists in this deployment (services/spark/AGENTS.md) —
     ``_runs`` is this package's own persisted view of what it submitted, keyed by
@@ -136,7 +153,8 @@ class SparkApi:
             # config documents the same invariant and is a harmless no-op if the
             # Connect protocol ignores a static-catalog conf set post-startup.
             builder = builder.config(
-                f"spark.sql.catalog.{self.lakehouse_catalog}.scope", self.lakehouse_scope
+                f"spark.sql.catalog.{self.lakehouse_catalog}.scope",
+                self.lakehouse_scope,
             )
             try:
                 session = builder.getOrCreate()
@@ -153,11 +171,21 @@ class SparkApi:
             if self._session is not None:
                 try:
                     self._session.stop()
-                except Exception:  # noqa: BLE001 - best-effort teardown
+                except Exception:  # noqa: BLE001  # nosec B110 - best-effort teardown
                     pass
                 self._session = None
 
+
+class SparkApi(SparkConnectBase):
+    """Authenticated-when-possible Spark Connect client: one method per operation.
+
+    No Spark History Server exists in this deployment (services/spark/AGENTS.md) —
+    ``_runs`` is this package's own persisted view of what it submitted, keyed by
+    ``run_id``, never a reconstruction of Spark's own (absent) job history.
+    """
+
     # ── session tool group ───────────────────────────────────────────────
+    @_verb("POST")
     def sql(self, query: str, *, row_limit: int = 1000) -> dict[str, Any]:
         """Execute one SQL statement and return rows as plain dicts.
 
@@ -182,6 +210,7 @@ class SparkApi:
             "truncated": len(rows) >= row_limit,
         }
 
+    @_verb("GET")
     def describe(self, table: str) -> dict[str, Any]:
         """Schema + column info for one fully-qualified table."""
         session = self.get_session()
@@ -197,6 +226,7 @@ class SparkApi:
             ) from exc
         return {"table": table, "columns": schema}
 
+    @_verb("DELETE")
     def cancel(self, tag: str | None = None) -> dict[str, Any]:
         """Interrupt running operations on this session (all, or one tagged operation)."""
         session = self.get_session()
@@ -210,9 +240,14 @@ class SparkApi:
         return {"interrupted_operation_ids": list(interrupted or []), "tag": tag}
 
     # ── catalog tool group ───────────────────────────────────────────────
+    @_verb("GET")
     def list_lakekeeper_tables(self, namespace: str) -> dict[str, Any]:
         result = self.sql(f"SHOW TABLES IN {self.lakehouse_catalog}.{namespace}")
-        return {"namespace": namespace, "tables": result["rows"], "count": result["row_count"]}
+        return {
+            "namespace": namespace,
+            "tables": result["rows"],
+            "count": result["row_count"],
+        }
 
     # ── transforms tool group ────────────────────────────────────────────
     def _require_transforms_enabled(self) -> None:
@@ -245,13 +280,21 @@ class SparkApi:
         transform's own success/failure signal.
         """
         try:
-            result = self.sql(f"SELECT snapshot_id FROM {table}.snapshots ORDER BY committed_at DESC LIMIT 1")
+            result = self.sql(
+                f"SELECT snapshot_id FROM {table}.snapshots ORDER BY committed_at DESC LIMIT 1"  # nosec B608 - table is an approval-gated manifest input
+            )
             rows = result.get("rows") or []
             return str(rows[0]["snapshot_id"]) if rows else None
         except (SparkApiError, KeyError, IndexError, TypeError):
             return None
 
-    def submit_transform(self, manifest: dict[str, Any], *, rerun_of: str | None = None) -> dict[str, Any]:
+    @_verb("POST")
+    def submit_transform(
+        self,
+        manifest: TransformManifest | dict[str, Any],
+        *,
+        rerun_of: str | None = None,
+    ) -> dict[str, Any]:
         """Execute one Transform manifest, recording a TransformRun (success or typed failure).
 
         SQL transforms run via ``spark.sql(body)`` with every declared input rewritten
@@ -264,6 +307,8 @@ class SparkApi:
         scope; see AGENTS.md).
         """
         self._require_transforms_enabled()
+        if isinstance(manifest, TransformManifest):
+            manifest = manifest.model_dump()
         run_id = str(uuid.uuid4())
         submitted_at = datetime.now(UTC).isoformat()
         transform = manifest["transform"]
@@ -287,7 +332,9 @@ class SparkApi:
             if kind == "sql":
                 sql_text = body
                 for ref in inputs:
-                    sql_text = sql_text.replace(ref["table"], self._versioned_select(ref))
+                    sql_text = sql_text.replace(
+                        ref["table"], self._versioned_select(ref)
+                    )
                 result = self.sql(sql_text)
                 row_count = result["row_count"]
             elif kind == "pyspark":
@@ -296,7 +343,9 @@ class SparkApi:
                 for ref in inputs:
                     alias = ref["table"].rsplit(".", 1)[-1]
                     namespace[alias] = session.table(self._versioned_select(ref))
-                df = eval(body, {"__builtins__": {}}, namespace)  # noqa: S307 - constrained namespace, write-gated + approval-gated
+                df = eval(  # nosec B307 - constrained namespace, write- and approval-gated
+                    body, {"__builtins__": {}}, namespace
+                )  # noqa: S307 - constrained namespace, write-gated + approval-gated
                 row_count = df.count()
                 mode = output.get("mode", "append")
                 writer = df.write.format("iceberg")
@@ -307,7 +356,9 @@ class SparkApi:
                 else:
                     writer.mode("append").saveAsTable(output["table"])
             else:
-                raise SparkApiError(f"unknown transform kind {kind!r}", kind="job_failed")
+                raise SparkApiError(
+                    f"unknown transform kind {kind!r}", kind="job_failed"
+                )
 
             record["status"] = "succeeded"
             record["row_count"] = row_count
@@ -336,6 +387,7 @@ class SparkApi:
         self._store_run(record)
         return record
 
+    @_verb("POST")
     def rerun_transform(self, run_id: str) -> dict[str, Any]:
         """Deterministically re-execute a prior TransformRun's manifest.
 
@@ -347,7 +399,9 @@ class SparkApi:
         self._require_transforms_enabled()
         original = self._runs.get(run_id)
         if original is None:
-            raise SparkApiError(f"no TransformRun found for run_id={run_id!r}", kind="job_failed")
+            raise SparkApiError(
+                f"no TransformRun found for run_id={run_id!r}", kind="job_failed"
+            )
         return self.submit_transform(original["manifest"], rerun_of=run_id)
 
     def _store_run(self, record: dict[str, Any]) -> None:
@@ -355,14 +409,22 @@ class SparkApi:
             self._runs[record["run_id"]] = record
             self._run_order.append(record["run_id"])
 
-    def list_transform_runs(self, *, limit: int = _DEFAULT_TRANSFORM_RUN_LIMIT, transform: str | None = None) -> dict[str, Any]:
+    @_verb("GET")
+    def list_transform_runs(
+        self, *, limit: int = _DEFAULT_TRANSFORM_RUN_LIMIT, transform: str | None = None
+    ) -> dict[str, Any]:
         with self._lock:
             ids = list(reversed(self._run_order))
-        records = [self._runs[i] for i in ids if transform is None or self._runs[i]["transform"] == transform]
+        records = [
+            self._runs[i]
+            for i in ids
+            if transform is None or self._runs[i]["transform"] == transform
+        ]
         page = records[:limit]
         return {"runs": page, "count": len(page), "total": len(records)}
 
     # ── lineage tool group ───────────────────────────────────────────────
+    @_verb("GET")
     def lineage_config(self) -> dict[str, Any]:
         """Report OpenLineage listener config — already set server-side at
 
@@ -384,6 +446,7 @@ class SparkApi:
             ),
         }
 
+    @_verb("GET")
     def lineage_events(self, limit: int = 20) -> dict[str, Any]:
         """Named per this lane's tool-group contract; NOT a Kafka consumer.
 
@@ -403,6 +466,7 @@ class SparkApi:
         )
 
     # ── ops tool group ───────────────────────────────────────────────────
+    @_verb("GET")
     def application_status(self) -> dict[str, Any]:
         """Best-effort application/session status.
 

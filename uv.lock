@@ -13,7 +13,7 @@ overrides = [{ name = "fastmcp-slim", extras = ["client", "server"], specifier =
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.2.1"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -26,7 +26,7 @@ dependencies = [
     { name = "pyyaml" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2a/c0/f68a33b9344f5f7f2b9bb4a5baf281d6279f8189d04630d1544850d2a684/agent_connector_sdk-0.2.1-py3-none-any.whl", hash = "sha256:0bc8f997b05fbb4358c1e44cfd5d526c7715a8d4d0d14ba7624883c22d3a0719", size = 708662, upload-time = "2026-10-17T15:37:16.917Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/cc/b1c3d3dd83b77dae8df3030df34f29a18cfa7390f8d2071b3c2f1ee041b1/agent_connector_sdk-0.3.1-py3-none-any.whl", hash = "sha256:14a09d18978462eb337b4b20a52d23e1528421776be672c705d73edc0d8d32a4", size = 722588, upload-time = "2026-10-18T08:12:33.999Z" },
 ]
 
 [package.optional-dependencies]
@@ -710,8 +710,8 @@ name = "httpcore2"
 version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11" },
-    { name = "truststore" },
+    { name = "h11", marker = "python_full_version < '3.14' or sys_platform != 'emscripten'" },
+    { name = "truststore", marker = "python_full_version < '3.14' or sys_platform != 'emscripten'" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cb/f3/1db7aa2bc2524062192bb0e0323969492d1883152a232fe36eea65f4e35c/httpcore2-2.13.1.tar.gz", hash = "sha256:e0aa977abe17e69a3b820a24542a6fa88702676d83880b8d194dcd18408e5103", size = 68071, upload-time = "2026-09-23T07:47:22.372Z" }
 wheels = [
@@ -1776,7 +1776,7 @@ wheels = [
 
 [[package]]
 name = "spark-mcp"
-version = "0.2.1"
+version = "0.3.0"
 source = { editable = "." }
 dependencies = [
     { name = "agent-connector-sdk", extra = ["mcp"] },
@@ -1806,9 +1806,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.2.1,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=0.2.1,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.2.1,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.3.0,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=0.3.0,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.3.0,<1.0.0" },
     { name = "pyspark", extras = ["connect"], specifier = ">=3.5.9,<3.6.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=9.1.1" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.4.0" },

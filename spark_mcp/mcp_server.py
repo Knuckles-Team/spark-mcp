@@ -13,9 +13,8 @@ from starlette.responses import JSONResponse
 from spark_mcp.api_client import Api
 from spark_mcp.auth import get_client
 from spark_mcp.kg_ingest import register_ingest_tools  # noqa: F401
-from spark_mcp.mcp.mcp_spark import register_spark_tools  # noqa: F401
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 logger = get_logger(name="spark_mcp")
 
 
