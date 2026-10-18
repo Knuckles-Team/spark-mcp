@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/spark-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/spark-mcp)
 
-*Version: 0.1.0*
+*Version: 0.2.0*
 
 > **Documentation** — Installation, deployment, and usage across the API, CLI, MCP,
 > and A2A agent interfaces are maintained in the
