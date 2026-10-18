@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/spark-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/spark-mcp)
 
-*Version: 0.2.0*
+*Version: 0.3.0*
 
 > **Documentation** — Installation, deployment, and usage across the API, CLI, MCP,
 > and A2A agent interfaces are maintained in the
@@ -120,9 +120,12 @@ Keycloak client-credentials identity tokens and can attach them as real gRPC bea
 credentials, but the deployed Spark Connect endpoint is plaintext gRPC today, so
 attach is disabled by default (see `docs/architecture.md`).
 
-`mcp/mcp_spark.py` registers five tool groups (`session`, `transforms`, `catalog`,
-`lineage`, `ops`) via one `register_tool_surface(...)` call in `mcp_server.py`,
-matching the fleet's one-registration-call convention. `kg_ingest.py` exposes
+`mcp_server.py` serves one typed `spark_<operation>` tool per `SparkApi` method
+(`spark_sql`, `spark_describe`, `spark_cancel`, `spark_submit_transform`,
+`spark_rerun_transform`, `spark_list_transform_runs`, `spark_list_lakekeeper_tables`,
+`spark_lineage_config`, `spark_lineage_events`, `spark_application_status`) through one
+`register_tool_surface(...)` call; GET-like reads are read-only and `spark_cancel` is
+destructive. `kg_ingest.py` exposes
 `ingest_entities`/`ingest_run` plus record-mapping helpers around the required
 `native_ingest` (Wire-First) authority.
 
