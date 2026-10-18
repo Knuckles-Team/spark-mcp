@@ -10,7 +10,7 @@
 
 ## Tech Stack
 - Python 3.12+
-- agent-utilities >= 2.0.0, <3.0.0
+- agent-connector-sdk >= 2.0.0, <3.0.0
 - Model Context Protocol (MCP)
 - `pyspark[connect]` — a thin gRPC CLIENT against a live Spark Connect server; this
   package never runs a Spark driver/worker itself.
@@ -18,7 +18,7 @@
 ## Commands
 - `pytest`: Run tests
 - `pre-commit run --all-files`: Lint code
-- `python -m agent_utilities.mcp.check_env_var_drift --check`: env-var drift gate (must be 0)
+- `python -m agent_connector_sdk.mcp.check_env_var_drift --check`: env-var drift gate (must be 0)
 
 ## Domain notes (read before touching `auth.py` or `api_client_spark.py`)
 - **Spark Connect IS live**, confirmed 2026-08-26 against
@@ -79,8 +79,8 @@
 ## ActionSpec / DEC-CA-07 status (as of this package's initial build, 2026-08-26)
 `CA-32` (the `ActionSpec` schema extension adding `parameters`/`target_resource`/
 `conflict_policy`/`requires_approval`/`approval_class`) has **not** merged onto
-`agent-utilities` `main` yet — confirmed by reading
-`agent_utilities/knowledge_graph/ontology/connector_manifest.py` (still the
+`agent-connector-sdk` `main` yet — confirmed by reading
+`agent_connector_sdk/knowledge_graph/ontology/connector_manifest.py` (still the
 three-field `{id, name, description}` shape). This package's `connector_manifest.yml`
 therefore carries only the boilerplate two-field `actions:` entries every generated
 manifest gets (`epistemic-answer`, `run_graph_flow`) — the rich typed-Action
@@ -95,14 +95,14 @@ session-load approval check are the REAL, already-enforced gates in the meantime
 `connector_manifest.yml` and the full capability certification bundle
 (`spark_mcp/ontology/{certification.json,shapes/connector.shacl.ttl,mappings/
 source.yaml,fixtures/records.json,migrations/manifest.json}`) are generated via
-agent-utilities's real generator scripts (`generate_connector_manifests.py` /
+agent-connector-sdk's real generator scripts (`generate_connector_manifests.py` /
 `generate_connector_capability_bundles.py`), same shape as every other connector in
 the fleet — never hand-typed. `scripts/update_ontology_lock.py` requires a trusted
 release-signing key (`ONTOLOGY_RELEASE_SIGNING_PRIVATE_KEY_REF`) not configured in
 this environment — the `ontology.lock` entry itself is left to the fleet-wide
 registration coordinator, per this lane's brief; not attempted here.
 
-Separately, `http://knuckles.team/kg/spark` is not yet in `agent-utilities`'s
+Separately, `http://knuckles.team/kg/spark` is not yet in `agent-connector-sdk`'s
 `REGISTERED_FEDERATED_IRIS` whitelist (`ontology_federation.py`) — the same
 onboarding step every new connector goes through, also left to the coordinator.
 

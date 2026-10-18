@@ -14,7 +14,7 @@ license: MIT
 tags: [spark, spark-connect, iceberg, transform, mcp]
 metadata:
   author: Genius
-  version: '0.1.0'
+  version: '0.2.0'
 ---
 # Spark Transform Operations
 
