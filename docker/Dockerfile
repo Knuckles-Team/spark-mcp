@@ -5,8 +5,12 @@
 # package exempted from --only-binary :all: (declared in pyproject.toml
 # [tool.pipelines] allow-source-build).
 #
+# Python 3.12, not the fleet's 3.14: the Spark Connect client must match the
+# 3.5.9 server, and pyspark 3.5's [connect] extra pins numpy<2, which publishes
+# no CPython 3.14 wheel. Move to 3.14 when the server moves to Spark 4.
+#
 #   docker build --file docker/Dockerfile --target mcp -t spark-mcp:<version>-mcp .
-FROM python:3.14-slim@sha256:cea0e6040540fb2b965b6e7fb5ffa00871e632eef63719f0ea54bca189ce14a6 AS mcp
+FROM python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1 AS mcp
 ARG HOST=127.0.0.1
 ARG PORT=8000
 ARG TRANSPORT="stdio"

@@ -38,6 +38,10 @@ spark-mcp = "spark_mcp.connectors"
 # pyspark publishes only a source distribution; the release readiness gate
 # and the Dockerfile build it from source, and nothing else.
 allow-source-build = ["pyspark"]
+# Python 3.12 for the readiness proof and the image: the Spark Connect client
+# must match the 3.5.9 server, and pyspark 3.5[connect] pins numpy<2, which has
+# no cp314 wheel.
+readiness-python = "3.12"
 
 [tool.uv.workspace]
 members = ["."]

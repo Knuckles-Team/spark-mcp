@@ -129,6 +129,16 @@ destructive. `kg_ingest.py` exposes
 `ingest_entities`/`ingest_run` plus record-mapping helpers around the required
 `native_ingest` (Wire-First) authority.
 
+## Python version
+
+This connector's image and release readiness proof run on **Python 3.12**, not
+the fleet's 3.14. The Spark Connect client has to match the deployed 3.5.9 Spark
+Connect server, and `pyspark` 3.5's `[connect]` extra pins `numpy<2`, which
+publishes no CPython 3.14 wheel. `pyproject.toml` declares this with
+`[tool.pipelines] readiness-python = "3.12"`; move to 3.14 when the server moves
+to Spark 4. `pyspark` itself ships only an sdist, so it is the one package built
+from source (`allow-source-build = ["pyspark"]`).
+
 ## Environment Variables
 
 <!-- ENV-VARS-TABLE:START -->
