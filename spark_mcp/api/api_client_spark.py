@@ -37,13 +37,14 @@ from __future__ import annotations
 import threading
 import uuid
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Literal
 
 from spark_mcp.api.api_client_base import (
     LAKEHOUSE_CATALOG_NAME,
     LAKEHOUSE_CATALOG_SCOPE,
     SparkApiError,
 )
+from spark_mcp.api.api_client_rest import SparkRestOperations
 from spark_mcp.models import TransformManifest
 
 __all__ = ["SparkApi", "SparkApiError", "SparkConnectBase"]
@@ -64,15 +65,14 @@ def _verb(method: str):
     return mark
 
 
-class SparkConnectBase:
+class SparkConnectBase(SparkRestOperations):
     """Session lifecycle and the TransformRun ledger behind :class:`SparkApi`.
 
     Base infrastructure, not operations: its public ``get_session`` and ``close``
     are never served as MCP tools (the SDK skips ``*Base`` classes).
 
-    No Spark History Server exists in this deployment (services/spark/AGENTS.md) —
-    ``_runs`` is this package's own persisted view of what it submitted, keyed by
-    ``run_id``, never a reconstruction of Spark's own (absent) job history.
+    ``_runs`` is this package's own view of the transforms it submitted, keyed by
+    ``run_id``; Spark's own job history is read over REST (``SparkRestOperations``).
     """
 
     def __init__(
@@ -86,7 +86,17 @@ class SparkConnectBase:
         use_ssl: bool = False,
         lakehouse_catalog: str = LAKEHOUSE_CATALOG_NAME,
         lakehouse_scope: str = LAKEHOUSE_CATALOG_SCOPE,
+        ui_url: str = "http://spark-runner.apps.svc:4040",
+        history_url: str = "http://spark-history.apps.svc:18080",
+        rest_timeout_s: float = 30.0,
+        rest_transport: Any = None,
     ) -> None:
+        self._rest_init(
+            ui_url=ui_url,
+            history_url=history_url,
+            rest_timeout_s=rest_timeout_s,
+            transport=rest_transport,
+        )
         self.remote_url = remote_url
         self.submit_timeout_s = submit_timeout_s
         self.enable_transforms = enable_transforms
@@ -140,11 +150,10 @@ class SparkConnectBase:
             if self._session is not None:
                 return self._session
             try:
-                import setuptools  # noqa: F401  (primes the distutils shim under py3.12+)
                 from pyspark.sql.connect.session import SparkSession
             except ImportError as exc:  # pragma: no cover - env-dependent
                 raise SparkApiError(
-                    f"pyspark[connect] is not importable: {exc}", kind="unreachable"
+                    f"pyspark-client is not importable: {exc}", kind="unreachable"
                 ) from exc
 
             builder = SparkSession.builder.remote(self._build_remote_uri())
@@ -177,12 +186,188 @@ class SparkConnectBase:
 
 
 class SparkApi(SparkConnectBase):
-    """Authenticated-when-possible Spark Connect client: one method per operation.
+    """Spark client: one method per operation.
 
-    No Spark History Server exists in this deployment (services/spark/AGENTS.md) —
-    ``_runs`` is this package's own persisted view of what it submitted, keyed by
-    ``run_id``, never a reconstruction of Spark's own (absent) job history.
+    SQL, DataFrame and catalog operations run over Spark Connect (gRPC); the
+    monitoring operations (applications, jobs, stages, executors, storage,
+    environment, SQL executions, history) run over the Spark REST API.
     """
+
+    def _frame_rows(self, df: Any, limit: int) -> dict[str, Any]:
+        try:
+            rows = df.limit(limit).collect()
+        except Exception as exc:  # noqa: BLE001 - reclassified into a typed error
+            raise SparkApiError(
+                f"Spark query failed: {exc}", kind="job_failed"
+            ) from exc
+        return {
+            "rows": [row.asDict(recursive=True) for row in rows],
+            "row_count": len(rows),
+            "columns": list(df.columns),
+            "truncated": len(rows) >= limit,
+        }
+
+    # ── DataFrame tool group ─────────────────────────────────────────────
+    @_verb("GET")
+    def query_table(
+        self,
+        table: str,
+        columns: list[str] | None = None,
+        where: str | None = None,
+        order_by: list[str] | None = None,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        """Read rows from one table with the DataFrame API (select, filter, sort, limit).
+
+        ``where`` is a Spark SQL boolean expression; ``order_by`` entries are column
+        names, with a leading ``-`` for descending.
+        """
+        session = self.get_session()
+        try:
+            df = session.table(table)
+            if columns:
+                df = df.select(*columns)
+            if where:
+                df = df.where(where)
+            if order_by:
+                from pyspark.sql.connect import functions as F
+
+                df = df.orderBy(
+                    *[
+                        F.col(c[1:]).desc() if c.startswith("-") else F.col(c).asc()
+                        for c in order_by
+                    ]
+                )
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(
+                f"query_table failed for {table!r}: {exc}", kind="job_failed"
+            ) from exc
+        return self._frame_rows(df, limit)
+
+    @_verb("GET")
+    def count_rows(self, table: str, where: str | None = None) -> dict[str, Any]:
+        """Count the rows of one table, optionally filtered by a SQL expression."""
+        session = self.get_session()
+        try:
+            df = session.table(table)
+            if where:
+                df = df.where(where)
+            count = df.count()
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(
+                f"count_rows failed for {table!r}: {exc}", kind="job_failed"
+            ) from exc
+        return {"table": table, "where": where, "count": count}
+
+    @_verb("GET")
+    def summarize_table(
+        self,
+        table: str,
+        columns: list[str] | None = None,
+        statistics: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Summary statistics computed by Spark (count, mean, stddev, min, quartiles, max).
+
+        ``statistics`` takes DataFrame.summary names such as ``count``, ``mean``,
+        ``stddev``, ``min``, ``25%``, ``50%``, ``75%``, ``max``.
+        """
+        session = self.get_session()
+        try:
+            df = session.table(table)
+            if columns:
+                df = df.select(*columns)
+            summary = df.summary(*(statistics or []))
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(
+                f"summarize_table failed for {table!r}: {exc}", kind="job_failed"
+            ) from exc
+        return self._frame_rows(summary, 100)
+
+    @_verb("GET")
+    def explain_query(
+        self,
+        query: str,
+        mode: Literal[
+            "simple", "extended", "codegen", "cost", "formatted"
+        ] = "formatted",
+    ) -> dict[str, Any]:
+        """Return Spark's query plan for one SQL statement without running it."""
+        session = self.get_session()
+        try:
+            rows = session.sql(
+                f"EXPLAIN {mode.upper()} {query}"
+            ).collect()  # nosec B608 - EXPLAIN only
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(f"explain failed: {exc}", kind="job_failed") from exc
+        return {"mode": mode, "plan": "\n".join(str(r[0]) for r in rows)}
+
+    # ── catalog tool group (Spark catalog API over Connect) ──────────────
+    def _catalog_call(self, what: str, call: Any) -> list[dict[str, Any]]:
+        try:
+            return [{k: v for k, v in item._asdict().items()} for item in call()]
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(f"{what} failed: {exc}", kind="job_failed") from exc
+
+    @_verb("GET")
+    def list_catalogs(self) -> dict[str, Any]:
+        """List the catalogs registered in the Spark session."""
+        session = self.get_session()
+        items = self._catalog_call("list_catalogs", session.catalog.listCatalogs)
+        return {"catalogs": items, "count": len(items)}
+
+    @_verb("GET")
+    def list_databases(self, pattern: str | None = None) -> dict[str, Any]:
+        """List the databases (namespaces) of the current catalog."""
+        session = self.get_session()
+        items = self._catalog_call(
+            "list_databases", lambda: session.catalog.listDatabases(pattern)
+        )
+        return {"databases": items, "count": len(items)}
+
+    @_verb("GET")
+    def list_tables(
+        self, database: str | None = None, pattern: str | None = None
+    ) -> dict[str, Any]:
+        """List tables and views of one database (``catalog.namespace`` accepted)."""
+        session = self.get_session()
+        items = self._catalog_call(
+            "list_tables", lambda: session.catalog.listTables(database, pattern)
+        )
+        return {"database": database, "tables": items, "count": len(items)}
+
+    @_verb("GET")
+    def list_columns(self, table: str) -> dict[str, Any]:
+        """List the columns of one table with type, nullability and partitioning."""
+        session = self.get_session()
+        items = self._catalog_call(
+            "list_columns", lambda: session.catalog.listColumns(table)
+        )
+        return {"table": table, "columns": items, "count": len(items)}
+
+    @_verb("GET")
+    def list_functions(
+        self, database: str | None = None, pattern: str | None = None
+    ) -> dict[str, Any]:
+        """List the functions visible in one database."""
+        session = self.get_session()
+        items = self._catalog_call(
+            "list_functions", lambda: session.catalog.listFunctions(database, pattern)
+        )
+        return {"functions": items, "count": len(items)}
+
+    @_verb("GET")
+    def get_current_catalog(self) -> dict[str, Any]:
+        """Current catalog and database of the Spark session."""
+        session = self.get_session()
+        try:
+            return {
+                "catalog": session.catalog.currentCatalog(),
+                "database": session.catalog.currentDatabase(),
+            }
+        except Exception as exc:  # noqa: BLE001
+            raise SparkApiError(
+                f"current catalog failed: {exc}", kind="job_failed"
+            ) from exc
 
     # ── session tool group ───────────────────────────────────────────────
     @_verb("POST")
@@ -468,13 +653,10 @@ class SparkApi(SparkConnectBase):
     # ── ops tool group ───────────────────────────────────────────────────
     @_verb("GET")
     def application_status(self) -> dict[str, Any]:
-        """Best-effort application/session status.
+        """Client-observed session status: endpoints, session liveness, version.
 
-        No Spark History Server exists in this deployment — there is no server-side
-        job history to query once a job's process exits (services/spark/AGENTS.md).
-        This reports what the CLIENT itself can observe: whether a session is
-        live, the remote endpoint, Spark's reported version, and this package's own
-        submitted-run counters — never fabricates cluster-wide state it cannot see.
+        Cluster-side application, job and history state comes from the REST
+        operations (``list_applications`` and friends).
         """
         session_live = self._session is not None
         status: dict[str, Any] = {
@@ -483,7 +665,8 @@ class SparkApi(SparkConnectBase):
             "lakehouse_catalog": self.lakehouse_catalog,
             "lakehouse_scope": self.lakehouse_scope,
             "transform_runs_recorded": len(self._runs),
-            "history_server": "not deployed (services/spark/AGENTS.md) — status is client-observed only",
+            "ui_url": self.ui_url,
+            "history_url": self.history_url,
         }
         if session_live:
             try:

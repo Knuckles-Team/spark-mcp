@@ -9,7 +9,7 @@
 - `docs/`: Architecture documentation
 
 ## Tech Stack
-- Python 3.12+
+- Python 3.14 (floor 3.12); Spark 4.1 server, `pyspark-client` 4.1
 - agent-connector-sdk >= 2.0.0, <3.0.0
 - Model Context Protocol (MCP)
 - `pyspark[connect]` — a thin gRPC CLIENT against a live Spark Connect server; this
@@ -39,16 +39,6 @@
   (`services/spark/AGENTS.md`). This client cannot override that static conf at
   runtime; its own `.config(...)` call is defense-in-depth documentation, not the
   enforcement point.
-- **Python 3.12 needs `setuptools` imported before `pyspark`** — `pyspark` 3.5.9's
-  `pandas.utils.require_minimum_pandas_version` still calls
-  `from distutils.version import LooseVersion`, and stdlib `distutils` was removed
-  in 3.12. `import setuptools` primes its bundled distutils shim
-  (`_distutils_hack`) before the first `pyspark` import; this package's
-  `api_client_spark.py` does this explicitly rather than relying on import order
-  at the call site. `setuptools>=68` must be present at runtime — it is NOT
-  declared as an explicit dependency in `pyproject.toml` today (pulled in
-  transitively via the build toolchain in every environment tested); if a future
-  environment lacks it, add `setuptools>=68` to `dependencies`.
 - **Identity propagation is a genuine, documented gap, not a design choice**:
   `pyspark`'s `ChannelBuilder` supports a `token=` param (real gRPC
   `access_token_call_credentials`), but attaching one forces a TLS channel, and
@@ -60,10 +50,12 @@
   refuses to attach it over a plaintext channel rather than silently downgrading —
   this needs CA-53 (or a follow-up) to front the Connect port with TLS before it
   can do anything today. Same class of gap as Lakekeeper's `authz=allowall`.
-- **No Spark History Server exists** — `spark_list_transform_runs`/
-  `spark_application_status` read this package's own in-process `TransformRun`
-  ledger (`SparkApi._runs`), never Spark's own (absent) job history. The ledger is
-  process-local; a restart loses it. `spark_ingest_run` is the durable path.
+- **Spark history is read over REST** — the Connect driver serves `/api/v1` on
+  `spark-runner:4040` (`SPARK_UI_URL`) and the History Server on
+  `spark-history:18080` (`SPARK_HISTORY_URL`); every monitoring tool takes
+  `server="driver"|"history"`. `spark_list_transform_runs` still reads this
+  package's own process-local `TransformRun` ledger; `spark_ingest_run` is the
+  durable path.
 - `spark_submit_transform`'s `kind="pyspark"` path evaluates `body` as ONE
   DataFrame-API expression against a controlled namespace (`spark` + named input
   DataFrames) — a deliberately constrained subset of "submit an arbitrary PySpark

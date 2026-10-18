@@ -20,7 +20,7 @@
 ![PyPI - Wheel](https://img.shields.io/pypi/wheel/spark-mcp)
 ![PyPI - Implementation](https://img.shields.io/pypi/implementation/spark-mcp)
 
-*Version: 0.3.0*
+*Version: 0.4.0*
 
 > **Documentation** — Installation, deployment, and usage across the API, CLI, MCP,
 > and A2A agent interfaces are maintained in the
@@ -52,10 +52,10 @@ into the epistemic-graph Knowledge Graph.
 against `lakehouse.analytics.trino_verify` returned the same 3 rows Trino's sibling
 lane already proved reading/writing (cross-engine Iceberg interop). See
 [docs/architecture.md](docs/architecture.md) for the full evidence and this
-package's `AGENTS.md` for known gaps (identity-token attach, no Spark History
-Server, `ActionSpec` typed-Actions deferral).
+package's `AGENTS.md` for known gaps (identity-token attach, `ActionSpec`
+typed-Actions deferral).
 
-Talks directly to Spark over `pyspark[connect]` — the gRPC Connect client, never
+Talks directly to Spark over `pyspark-client` (the thin Spark Connect client) for SQL, DataFrame and catalog operations, and over the Spark monitoring REST API (`/api/v1` on the driver UI and the History Server) for applications, jobs, stages, executors, storage, environment and SQL executions, never
 `bin/spark-shell --remote` (does not work on the vanilla Spark image) and never a
 `kubectl exec spark-sql` fallback.
 
@@ -131,13 +131,10 @@ destructive. `kg_ingest.py` exposes
 
 ## Python version
 
-This connector's image and release readiness proof run on **Python 3.12**, not
-the fleet's 3.14. The Spark Connect client has to match the deployed 3.5.9 Spark
-Connect server, and `pyspark` 3.5's `[connect]` extra pins `numpy<2`, which
-publishes no CPython 3.14 wheel. `pyproject.toml` declares this with
-`[tool.pipelines] readiness-python = "3.12"`; move to 3.14 when the server moves
-to Spark 4. `pyspark` itself ships only an sdist, so it is the one package built
-from source (`allow-source-build = ["pyspark"]`).
+Python 3.14 (floor 3.12) against a Spark 4.1 server. `pyspark-client` 4.1 is the
+thin Spark Connect client; it runs on numpy 2, pandas 3 and pyarrow wheels.
+`pyspark-client` ships only a pure-Python sdist, so it is the one package built
+from source (`[tool.pipelines] allow-source-build = ["pyspark-client"]`).
 
 ## Environment Variables
 
@@ -148,6 +145,9 @@ from source (`allow-source-build = ["pyspark"]`).
 | Variable | Example | Description |
 |----------|---------|-------------|
 | `SPARK_CONNECT_URL` | `sc://spark-connect.apps.svc:15002` |  |
+| `SPARK_UI_URL` | `http://spark-runner.apps.svc:4040` | driver monitoring REST |
+| `SPARK_HISTORY_URL` | `http://spark-history.apps.svc:18080` | History Server REST |
+| `SPARK_REST_TIMEOUT_S` | `30` |  |
 | `SPARK_SUBMIT_TIMEOUT_S` | `300` |  |
 | `SPARK_LAKEHOUSE_CATALOG` | `lakehouse` | document/verify the invariant client-side — same invalid_scope landmine as |
 | `SPARK_LAKEHOUSE_SCOPE` | `lakekeeper` |  |

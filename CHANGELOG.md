@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-18
+
+### Changed
+- Spark 4: `pyspark-client` 4.1 (Spark Connect) on Python 3.14 with numpy 2,
+  pandas and pyarrow; the 3.12 readiness exception is gone.
+
+### Added
+- DataFrame and catalog operations over Spark Connect: query_table, count_rows,
+  summarize_table, explain_query, list_catalogs, list_databases, list_tables,
+  list_columns, list_functions, get_current_catalog.
+- Monitoring REST operations against the driver UI and the History Server:
+  applications, jobs, stages (attempts, task summary, task list), executors,
+  storage RDDs, environment, SQL executions, processes, version, and kill_job /
+  kill_stage on the live driver.
+
 ## [0.1.0] - 2026-08-26
 
 ### Added

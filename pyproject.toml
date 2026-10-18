@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "spark-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "Spark Connect (gRPC) API + MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 3 - Alpha", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0", "pyspark[connect]>=3.5.9,<3.6.0", "requests>=2.34.2", "setuptools>=84.0.0",]
+dependencies = [ "agent-connector-sdk[mcp]>=0.3.6,<1.0.0", "httpx>=0.28.1", "numpy>=2.5.4", "pandas>=3.0.6", "pyarrow>=26.0.0", "pyspark-client>=4.1.3,<4.2.0", "requests>=2.34.2",]
 [[project.authors]]
 name = "Project Maintainers"
 email = "maintainers@users.noreply.github.com"
@@ -18,8 +18,8 @@ email = "maintainers@users.noreply.github.com"
 text = "MIT"
 
 [project.optional-dependencies]
-mcp = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
-all = [ "agent-connector-sdk[mcp]>=0.3.0,<1.0.0",]
+mcp = [ "agent-connector-sdk[mcp]>=0.3.6,<1.0.0",]
+all = [ "agent-connector-sdk[mcp]>=0.3.6,<1.0.0",]
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
@@ -35,13 +35,10 @@ spark-mcp = "spark_mcp.ontology"
 spark-mcp = "spark_mcp.connectors"
 
 [tool.pipelines]
-# pyspark publishes only a source distribution; the release readiness gate
-# and the Dockerfile build it from source, and nothing else.
-allow-source-build = ["pyspark"]
-# Python 3.12 for the readiness proof and the image: the Spark Connect client
-# must match the 3.5.9 server, and pyspark 3.5[connect] pins numpy<2, which has
-# no cp314 wheel.
-readiness-python = "3.12"
+# pyspark-client (the thin Spark Connect client) publishes only a pure-Python
+# source distribution; the release readiness gate and the Dockerfile build that
+# one package from source, and nothing else.
+allow-source-build = ["pyspark-client"]
 
 [tool.uv.workspace]
 members = ["."]
@@ -51,10 +48,10 @@ include-package-data = true
 
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py312"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.12"
 ignore_missing_imports = true
 check_untyped_defs = true
 

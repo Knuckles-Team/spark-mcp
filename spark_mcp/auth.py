@@ -37,6 +37,8 @@ _EXPIRY_SKEW_S = 15.0
 _DEFAULT_TOKEN_TTL_S = 60.0
 
 DEFAULT_SPARK_CONNECT_URL = "sc://spark-connect.apps.svc:15002"
+DEFAULT_SPARK_UI_URL = "http://spark-runner.apps.svc:4040"
+DEFAULT_SPARK_HISTORY_URL = "http://spark-history.apps.svc:18080"
 
 
 class _TokenCache:
@@ -186,4 +188,7 @@ def get_client() -> Api:
         use_ssl=use_ssl,
         lakehouse_catalog=setting("SPARK_LAKEHOUSE_CATALOG", "lakehouse"),
         lakehouse_scope=setting("SPARK_LAKEHOUSE_SCOPE", "lakekeeper"),
+        ui_url=setting("SPARK_UI_URL", DEFAULT_SPARK_UI_URL),
+        history_url=setting("SPARK_HISTORY_URL", DEFAULT_SPARK_HISTORY_URL),
+        rest_timeout_s=float(setting("SPARK_REST_TIMEOUT_S", "30")),
     )
