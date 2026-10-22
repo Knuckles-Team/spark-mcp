@@ -12,4 +12,4 @@ Read the existing specs first. Extend the spec that owns the behavior. Create a 
 
 ## Local specifications
 
-This repository has no local spec yet.
+- [`CONN-SPARK-MCP-SPARK4`](spark4/spec.md) — Spark 4 queries and monitoring connector.
