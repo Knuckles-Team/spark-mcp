@@ -1,0 +1,22 @@
+{
+  "schema_version": 2,
+  "spec_id": "CONN-SPARK-MCP-CONNECTOR-CONTENT",
+  "owner_repo": "spark-mcp",
+  "delivery_state": "VERIFIED",
+  "requirement_ids": [
+    "CONN-SPARK-MCP-CONNECTOR-CONTENT-R001"
+  ],
+  "requirements": [
+    {
+      "id": "CONN-SPARK-MCP-CONNECTOR-CONTENT-R001",
+      "title": "Default content",
+      "delivery_state": "VERIFIED",
+      "landed_in": [
+        "7d3dc7a77e28"
+      ],
+      "verified_by": [
+        "tests/test_default_content_surfaces.py:15"
+      ]
+    }
+  ]
+}
