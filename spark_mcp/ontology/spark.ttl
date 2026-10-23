@@ -77,5 +77,7 @@
     DatasetVersions they consume/produce — federated into the agent-connector-sdk
     knowledge-graph hub. Spark Connect is live on spark-connect.apps.svc:15002
     (the spark-runner pod's Connect endpoint), proven with a real
-    pyspark.sql.connect session against the deployed lakehouse.""" ;
-    owl:imports <http://knuckles.team/kg> .
+    pyspark.sql.connect session against the deployed lakehouse.""" .
+
+# ontology-codemod R4
+<http://knuckles.team/kg#DatasetVersion> rdfs:subClassOf <http://knuckles.team/kg#Dataset> .
