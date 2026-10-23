@@ -15,7 +15,7 @@ overrides = [{ name = "fastmcp-slim", extras = ["client", "server"], specifier =
 
 [[package]]
 name = "agent-connector-sdk"
-version = "0.3.6"
+version = "0.3.18"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "anyio" },
@@ -27,9 +27,9 @@ dependencies = [
     { name = "pydantic" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/54/5a/8f41f3acdededde09e5e442a75811211f4b6de9569781d71d0184ed2968d/agent_connector_sdk-0.3.6.tar.gz", hash = "sha256:3ffa4624d121ca3ce48bf1055df3716a5b356cb3dba0e469e6025ae76ef99a66", size = 730050, upload-time = "2026-10-18T13:06:16.566Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/12/0a8cc16e76872f16520143ac925e2989ce57ffd36ce9f27e079c2cbecdd3/agent_connector_sdk-0.3.18.tar.gz", hash = "sha256:86a912ee476f6e56329e34081e831634d40f07a083ca9b5291a1d4f57aaeb9e2", size = 757450, upload-time = "2026-10-23T03:38:51.862Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/3b/9c/e61b5d7d5810af3cfbfdb9c7f4a21e8aba65b77af1efddee044f6898dc8e/agent_connector_sdk-0.3.6-py3-none-any.whl", hash = "sha256:50400a44f0db0c7508756bc87654f851fcb9724d20cfc70860b31f2176a61c10", size = 732404, upload-time = "2026-10-18T13:06:14.853Z" },
+    { url = "https://files.pythonhosted.org/packages/9d/9c/542f187c014e50cf24171a33d10ed4959c4616fa62a08477981b649407b0/agent_connector_sdk-0.3.18-py3-none-any.whl", hash = "sha256:7ee79bb2680490e047d25eaa6349b8778f427e2a09870aab6f342b7c8f677eec", size = 750933, upload-time = "2026-10-23T03:38:50.403Z" },
 ]
 
 [package.optional-dependencies]
@@ -1816,9 +1816,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.3.6,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=0.3.6,<1.0.0" },
-    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.3.6,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], specifier = ">=0.3.18,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'all'", specifier = ">=0.3.18,<1.0.0" },
+    { name = "agent-connector-sdk", extras = ["mcp"], marker = "extra == 'mcp'", specifier = ">=0.3.18,<1.0.0" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "numpy", specifier = ">=2.5.4" },
     { name = "pandas", specifier = ">=3.0.6" },
