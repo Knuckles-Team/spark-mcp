@@ -14,7 +14,7 @@ from spark_mcp.api_client import Api
 from spark_mcp.auth import get_client
 from spark_mcp.kg_ingest import register_ingest_tools  # noqa: F401
 
-__version__ = "0.4.1"
+__version__ = "0.4.2"
 logger = get_logger(name="spark_mcp")
 
 

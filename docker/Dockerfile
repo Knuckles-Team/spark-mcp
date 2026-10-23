@@ -23,7 +23,7 @@ ENV HOST=${HOST} \
     XDG_CONFIG_HOME=/tmp/.config \
     XDG_CACHE_HOME=/tmp/.cache
 # Fixed identity for least-privilege runtime and stable volume ownership.
-RUN pip install --only-binary :all: --no-binary pyspark-client spark-mcp[mcp]==0.4.1 \
+RUN pip install --only-binary :all: --no-binary pyspark-client spark-mcp[mcp]==0.4.2 \
     && groupadd --system --gid 10001 app \
     && useradd --system --uid 10001 --gid 10001 --no-create-home \
         --home-dir /tmp --shell /usr/sbin/nologin app
