@@ -294,9 +294,7 @@ class SparkApi(SparkConnectBase):
         """Return Spark's query plan for one SQL statement without running it."""
         session = self.get_session()
         try:
-            rows = session.sql(
-                f"EXPLAIN {mode.upper()} {query}"
-            ).collect()  # nosec B608 - EXPLAIN only
+            rows = session.sql(f"EXPLAIN {mode.upper()} {query}").collect()  # nosec B608 - EXPLAIN only
         except Exception as exc:  # noqa: BLE001
             raise SparkApiError(f"explain failed: {exc}", kind="job_failed") from exc
         return {"mode": mode, "plan": "\n".join(str(r[0]) for r in rows)}
