@@ -26,7 +26,7 @@ import time
 from typing import Any
 
 import requests
-from agent_connector_sdk.config import setting
+from scion_sdk.config import setting
 
 from spark_mcp.api.api_client_base import SparkApiError
 from spark_mcp.api_client import Api

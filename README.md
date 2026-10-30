@@ -63,7 +63,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `spark-mcp[mcp]` | Connector-focused MCP server (`agent-connector-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `spark-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `spark-mcp[all]` | Everything (`mcp` + `agent` + `logfire`) | Development / both surfaces |
 
 ```bash
@@ -161,7 +161,7 @@ from source (`[tool.pipelines] allow-source-build = ["pyspark-client"]`).
 | `SPARKTOOL` | `True` |  |
 | `INGESTTOOL` | `True` |  |
 
-#### Inherited agent-connector-sdk variables (apply to every connector)
+#### Inherited scion-sdk variables (apply to every connector)
 
 | Variable | Example | Description |
 |----------|---------|-------------|
@@ -190,7 +190,7 @@ from source (`[tool.pipelines] allow-source-build = ["pyspark-client"]`).
 | `MODEL_ID` | `gpt-4o` | Model id for the agent |
 | `ENABLE_WEB_UI` | `True` | Serve the AG-UI web interface |
 
-_15 package + 24 inherited variable(s). Auto-generated from `.env.example` + the shared agent-connector-sdk set — do not edit._
+_15 package + 24 inherited variable(s). Auto-generated from `.env.example` + the shared scion-sdk set — do not edit._
 <!-- ENV-VARS-TABLE:END -->
 
 

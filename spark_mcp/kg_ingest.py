@@ -9,7 +9,7 @@ AGENTS.md) into the epistemic-graph engine as typed OWL nodes (``:SparkApplicati
 ``hasJob``/``runs``/``executesTransform``/``producedVersion``/``consumedVersion``
 relations.
 
-The txn write path is the required ``agent_connector_sdk.ingest`` knowledge-ingest
+The txn write path is the required ``scion_sdk.ingest`` knowledge-ingest
 facade (``KnowledgeIngest``/``current_ingest``) — never a bespoke write path. Node
 ids follow ``spark:<class>:<externalId>``; ``node_type`` on each entity matches a
 class federated by ``spark_mcp.ontology`` (``spark.ttl``). Batches at ≤500 entities
@@ -23,7 +23,9 @@ import logging
 from typing import Any
 from urllib.parse import urlparse
 
-from agent_connector_sdk.ingest import (
+from fastmcp import FastMCP
+from pydantic import Field
+from scion_sdk.ingest import (
     ChangeSet,
     Entity,
     IngestBinding,
@@ -32,8 +34,6 @@ from agent_connector_sdk.ingest import (
     Relationship,
     current_ingest,
 )
-from fastmcp import FastMCP
-from pydantic import Field
 
 logger = logging.getLogger("spark_mcp.kg")
 
