@@ -12,7 +12,7 @@ description: >-
 license: MIT
 tags: [spark, spark-connect, kg, ingest, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.2.0'
 ---
 # Spark KG Ingestion

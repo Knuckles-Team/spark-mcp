@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
-from agent_connector_sdk.ingest import IngestError, KnowledgeIngest
+from scion_sdk.ingest import IngestError, KnowledgeIngest
 
 from spark_mcp.kg_ingest import (
     ingest_entities,

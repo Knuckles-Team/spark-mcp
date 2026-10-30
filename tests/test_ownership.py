@@ -10,7 +10,7 @@ The always-enforced client-side layer is proven here:
      the same real mechanism as egeria-mcp's `EGERIA_ENABLE_WRITE` — an explicit
      refusal, not a UI-only guard).
   2. `dispatch_intent`'s `_approval_satisfied_by_session_load` fleet-intent gate
-     (DEC-CA-07), proven against `agent_connector_sdk.mcp.tools.intent_tools` directly
+     (DEC-CA-07), proven against `scion_sdk.mcp.tools.intent_tools` directly
      — a caller who never `load_tools`-ed `spark_submit_transform` is refused even
      with a syntactically valid plan.
 """

@@ -1,6 +1,6 @@
 """spark-mcp: Spark Connect (gRPC) API + MCP Server + A2A Server."""
 
-from agent_connector_sdk.connector import Connector
+from scion_sdk.connector import Connector
 
 from spark_mcp.api_client import Api
 from spark_mcp.auth import get_client

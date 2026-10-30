@@ -8,7 +8,7 @@ description: >-
 license: MIT
 tags: [spark, spark-connect, development, mcp, spec-delivery]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.1.0'
 ---
 

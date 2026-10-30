@@ -13,7 +13,7 @@ description: >-
 license: MIT
 tags: [spark, spark-connect, iceberg, transform, mcp]
 metadata:
-  author: Genius
+  author: Knuckles-Team
   version: '0.2.0'
 ---
 # Spark Transform Operations

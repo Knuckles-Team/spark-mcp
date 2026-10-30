@@ -9,7 +9,7 @@ description = "Spark Connect (gRPC) API + MCP Server for Agentic AI!"
 readme = "README.md"
 classifiers = [ "Development Status :: 3 - Alpha", "License :: OSI Approved :: MIT License", "Environment :: Console", "Operating System :: POSIX :: Linux", "Programming Language :: Python :: 3",]
 requires-python = ">=3.12, <3.15"
-dependencies = [ "scion-sdk[mcp]>=0.5.9,<0.6.0", "httpx>=0.28.1", "numpy>=2.5.4", "pandas>=3.0.6", "pyarrow>=26.0.0", "pyspark-client>=4.1.3,<4.2.0", "requests>=2.34.2",]
+dependencies = [ "scion-sdk[mcp]>=0.6.0,<0.7.0", "httpx>=0.28.1", "numpy>=2.5.4", "pandas>=3.0.6", "pyarrow>=26.0.0", "pyspark-client>=4.1.3,<4.2.0", "requests>=2.34.2",]
 [[project.authors]]
 name = "Repository Maintainers"
 email = "maintainers@knuckles.team"
@@ -21,7 +21,7 @@ text = "MIT"
 test = [ "pytest-xdist>=3.8.0", "pytest>=9.1.1", "pytest-asyncio>=1.4.0", "pytest-cov>=7.1.0",]
 
 [project.scripts]
-spark-mcp = "agent_connector_sdk.cli:serve"
+spark-mcp = "scion_sdk.cli:serve"
 
 [tool.pipelines]
 # pyspark-client (the thin Spark Connect client) publishes only a pure-Python
@@ -30,7 +30,7 @@ spark-mcp = "agent_connector_sdk.cli:serve"
 allow-source-build = ["pyspark-client"]
 
 # The one declared connector identity: the fleet name (SCION-CONNECTOR-CONTROL-R071).
-[project.entry-points."agent_connector_sdk.connector"]
+[project.entry-points."scion_sdk.connector"]
 spark-mcp = "spark_mcp:connector"
 
 [tool.uv.workspace]
