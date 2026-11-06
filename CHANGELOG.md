@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Central connector migration: requires `agent-connector-sdk>=0.5.4`; server bootstrap, version, containers, ontology artifacts, security scaffold and pre-commit config are provided centrally.
 
 ## [Unreleased]
+### Surface backfill (scion-sdk 0.9.0)
+- Declared data resources, tool-use contracts, links, data locations and business roles; added operator and three business-role agent prompts; added the table-exploration, history-monitoring and job-control skills so every tool is named; raised `scion-sdk` to `>=0.9.0`.
+
 
 ## [0.4.5] - 2026-10-26
 

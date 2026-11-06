@@ -33,7 +33,7 @@ landmine Trino/Lakekeeper hit if this is ever dropped.
   (`spark_list_transform_runs`, `spark_rerun_transform`).
 - List tables in a lakehouse namespace (`spark_list_lakekeeper_tables`).
 - Check OpenLineage listener config or client-observed application status
-  (`spark_lineage_config`, `spark_application_status`).
+  (`spark_lineage_config`, `spark_lineage_events`, `spark_application_status`).
 - Interrupt a running operation (`spark_cancel`).
 
 ## When NOT to use
