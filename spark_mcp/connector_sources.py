@@ -6,7 +6,34 @@ Served live as ``connector://resources``. Regenerate by editing the declarations
 # ruff: noqa: E501
 from __future__ import annotations
 
-SOURCES = ()
+from scion_sdk.ingest.live_declaration import source_meta
+
+CONNECTOR = "spark-mcp"
+
+SOURCES = (
+    source_meta(
+        tool="spark_list_transform_runs",
+        source_id="spark-transform-runs",
+        record_type="TransformRun",
+        id_field="run_id",
+        preset={"doc_type": "spark_transform_run", "params_style": "args"},
+        records_path="runs",
+        server="spark-mcp",
+        text_field="transform",
+        title_field="transform",
+    ),
+    source_meta(
+        tool="spark_list_applications",
+        source_id="spark-applications",
+        record_type="SparkApplication",
+        id_field="id",
+        preset={"doc_type": "spark_application", "params_style": "args"},
+        records_path="items",
+        server="spark-mcp",
+        text_field="name",
+        title_field="name",
+    ),
+)
 
 SCHEMA_MAPPINGS = {
     "DatasetVersion": {
