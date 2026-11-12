@@ -106,7 +106,7 @@ release-signing key (`ONTOLOGY_RELEASE_SIGNING_PRIVATE_KEY_REF`) not configured 
 this environment — the `ontology.lock` entry itself is left to the fleet-wide
 registration coordinator, per this lane's brief; not attempted here.
 
-Separately, `http://knuckles.team/kg/spark` is not yet in `scion-sdk`'s
+Separately, `https://knuckles-team.github.io/ontology/connector/spark` is not yet in `scion-sdk`'s
 `REGISTERED_FEDERATED_IRIS` whitelist (`ontology_federation.py`) — the same
 onboarding step every new connector goes through, also left to the coordinator.
 
