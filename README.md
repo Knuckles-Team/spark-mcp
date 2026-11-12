@@ -43,7 +43,7 @@ submission/tracking/rerun against the shared Iceberg `lakehouse` catalog
 namespace/table catalog reads, OpenLineage config/status reporting, and a
 Wire-First `spark_ingest_run` tool that pushes the
 `SparkApplication -> SparkJob -> Transform -> TransformRun -> DatasetVersion` chain
-into the epistemic-graph Knowledge Graph.
+into the medulla Knowledge Graph.
 
 **Spark Connect is live**, confirmed 2026-08-26 against
 `spark-connect.apps.svc:15002` with a real `pyspark.sql.connect` session — a query
@@ -63,7 +63,7 @@ Pick the extra that matches what the operator want to run:
 
 | Extra | Installs | Use when |
 |-------|----------|----------|
-| `spark-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `epistemic-graph[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `spark-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `medulla[full]`) | The operator only run the **MCP server** (smallest install / image) |
 | `spark-mcp[all]` | Everything (`mcp` + `agent` + `logfire`) | Development / both surfaces |
 
 ```bash
