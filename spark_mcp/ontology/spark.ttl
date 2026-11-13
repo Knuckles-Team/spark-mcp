@@ -1,7 +1,8 @@
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix core: <https://knuckles-team.github.io/ontology/core#> .
 @prefix foaf: <http://xmlns.com/foaf/0.1/> .
 @prefix dc: <http://purl.org/dc/terms/> .
-@prefix : <http://knuckles.team/kg#> .
+@prefix : <https://knuckles-team.github.io/ontology/connector/spark#> .
 @prefix owl: <http://www.w3.org/2002/07/owl#> .
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
@@ -19,18 +20,22 @@
 # --- classes (owl:Class) ---
 
 :SparkApplication a owl:Class ;
+    rdfs:subClassOf core:Application ;
     rdfs:label "Spark Application" ;
     rdfs:comment "One Spark Connect server application instance (the spark-runner pod's Connect endpoint at spark-connect.apps.svc:15002)." .
 
 :SparkJob a owl:Class ;
+    rdfs:subClassOf core:Job ;
     rdfs:label "Spark Job" ;
     rdfs:comment "One Spark job (a single SQL/PySpark execution) submitted against a SparkApplication (spark_application_status)." .
 
 :Transform a owl:Class ;
+    rdfs:subClassOf core:Transformation ;
     rdfs:label "Transform" ;
     rdfs:comment "A versioned Transform manifest declaration (kind: sql|pyspark, body, inputs, output) accepted by spark_submit_transform." .
 
 :TransformRun a owl:Class ;
+    rdfs:subClassOf core:TransformationRun ;
     rdfs:label "Transform Run" ;
     rdfs:comment "One execution of a Transform (spark_submit_transform / spark_rerun_transform), pinning input DatasetVersions and recording success or typed failure." .
 
@@ -70,7 +75,7 @@
     rdfs:domain :TransformRun ;
     rdfs:range :DatasetVersion .
 
-<http://knuckles.team/kg/spark> a owl:Ontology ;
+<https://knuckles-team.github.io/ontology/connector/spark> a owl:Ontology ;
     rdfs:label "Spark Connect Ontology" ;
     rdfs:comment """Spark Connect job/transform/lineage topology — applications, jobs,
     versioned Transform manifests, their runs, and the pinned Iceberg
@@ -80,4 +85,4 @@
     pyspark.sql.connect session against the deployed lakehouse.""" .
 
 # ontology-codemod R4
-<http://knuckles.team/kg#DatasetVersion> rdfs:subClassOf <http://knuckles.team/kg#Dataset> .
+<https://knuckles-team.github.io/ontology/connector/spark#DatasetVersion> rdfs:subClassOf <https://knuckles-team.github.io/ontology/core#Dataset> .

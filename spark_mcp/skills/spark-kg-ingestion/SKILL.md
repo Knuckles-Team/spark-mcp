@@ -2,7 +2,7 @@
 name: spark-kg-ingestion
 skill_type: skill
 description: >-
-  Push one Spark Connect TransformRun into the epistemic-graph Knowledge Graph as
+  Push one Spark Connect TransformRun into the medulla Knowledge Graph as
   typed OWL nodes via the spark-mcp MCP server's Wire-First ingest tool —
   SparkApplication, SparkJob, Transform, TransformRun, and the DatasetVersions it
   consumed/produced. Use when the agent must make a Transform execution
@@ -18,7 +18,7 @@ metadata:
 # Spark KG Ingestion
 
 Pushes one recorded `TransformRun` (this package's own ledger — there is no Spark
-History Server in this deployment to backfill from) into the epistemic-graph engine
+History Server in this deployment to backfill from) into the medulla engine
 as a typed OWL chain, through the required `native_ingest` (Wire-First /
 `ApplyChangeEnvelope`) authority — never a bespoke write path.
 

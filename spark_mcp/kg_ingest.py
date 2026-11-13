@@ -1,10 +1,10 @@
-"""Native epistemic-graph ingestion for Spark Connect job/transform/lineage records.
+"""Native medulla ingestion for Spark Connect job/transform/lineage records.
 
 CONCEPT:AU-KG.ingest.enterprise-source-extractor. The record-source twin of
 ``lakekeeper_mcp``/``egeria_mcp``'s kg_ingest modules: spark-mcp pushes what it
 itself observed submitting Transforms over the live Spark Connect session (there is
 no Spark History Server in this deployment to backfill from — services/spark/
-AGENTS.md) into the epistemic-graph engine as typed OWL nodes (``:SparkApplication``,
+AGENTS.md) into the medulla engine as typed OWL nodes (``:SparkApplication``,
 ``:SparkJob``, ``:Transform``, ``:TransformRun``, ``:DatasetVersion``), with
 ``hasJob``/``runs``/``executesTransform``/``producedVersion``/``consumedVersion``
 relations.
