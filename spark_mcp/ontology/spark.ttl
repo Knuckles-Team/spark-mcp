@@ -39,10 +39,6 @@
     rdfs:label "Transform Run" ;
     rdfs:comment "One execution of a Transform (spark_submit_transform / spark_rerun_transform), pinning input DatasetVersions and recording success or typed failure." .
 
-:DatasetVersion a owl:Class ;
-    rdfs:label "Dataset Version" ;
-    rdfs:comment "One pinned Iceberg snapshot version of a lakehouse table, consumed or produced by a TransformRun (as_of_version pinning for deterministic reruns)." .
-
 # --- links (owl:ObjectProperty) ---
 
 :hasJob a owl:ObjectProperty ;
@@ -67,13 +63,13 @@
     rdfs:label "produced version" ;
     rdfs:comment "Links a TransformRun to the output DatasetVersion it produced (the Transform manifest's declared output table's new snapshot)." ;
     rdfs:domain :TransformRun ;
-    rdfs:range :DatasetVersion .
+    rdfs:range core:DatasetVersion .
 
 :consumedVersion a owl:ObjectProperty ;
     rdfs:label "consumed version" ;
     rdfs:comment "Links a TransformRun to an input DatasetVersion it read (pinned via as_of_version, never an implicit 'latest' read on a declared rerun)." ;
     rdfs:domain :TransformRun ;
-    rdfs:range :DatasetVersion .
+    rdfs:range core:DatasetVersion .
 
 <https://knuckles-team.github.io/ontology/connector/spark> a owl:Ontology ;
     rdfs:label "Spark Connect Ontology" ;
@@ -85,4 +81,3 @@
     pyspark.sql.connect session against the deployed lakehouse.""" .
 
 # ontology-codemod R4
-<https://knuckles-team.github.io/ontology/connector/spark#DatasetVersion> rdfs:subClassOf <https://knuckles-team.github.io/ontology/core#Dataset> .
