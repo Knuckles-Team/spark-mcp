@@ -26,15 +26,6 @@
 
 ---
 
-## Table of Contents
-- [Overview](#overview)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Architecture](#architecture)
-- [Environment Variables](#environment-variables)
-- [MCP Tools](#mcp-tools)
-- [Documentation](#documentation)
-
 ## Overview
 `spark-mcp` exposes a standardized interface to the live Spark Connect deployment
 via the Model Context Protocol — SQL/session execution, versioned Transform
@@ -57,82 +48,57 @@ Talks directly to Spark over `pyspark-client` (the thin Spark Connect client) fo
 `bin/spark-shell --remote` (does not work on the vanilla Spark image) and never a
 `kubectl exec spark-sql` fallback.
 
-## Installation
+---
 
-Pick the extra that matches what the operator want to run:
+## MCP
 
-| Extra | Installs | Use when |
-|-------|----------|----------|
-| `spark-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `medulla[full]`) | The operator only run the **MCP server** (smallest install / image) |
-| `spark-mcp[all]` | Everything (`mcp` + `agent` + `logfire`) | Development / both surfaces |
+### MCP Tools
 
-```bash
-uv pip install "spark-mcp[mcp]"
-```
+| Group | Tools |
+|-------|-------|
+| session | `spark_sql`, `spark_describe`, `spark_cancel` |
+| transforms | `spark_submit_transform`, `spark_list_transform_runs`, `spark_rerun_transform` |
+| catalog | `spark_list_lakekeeper_tables` |
+| lineage | `spark_lineage_config`, `spark_lineage_events` |
+| ops | `spark_application_status` |
+| ingest | `spark_ingest_run` |
 
-### Container images (`:mcp`)
+### Available MCP Tools
 
-One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
+<!-- MCP-TOOLS-TABLE:START -->
 
-```bash
-docker build --target mcp   -t spark-mcp:mcp    .
-```
+#### Condensed action-routed tools (`MCP_TOOL_MODE=condensed`)
 
-Both images install a headless JRE at runtime — `pyspark[connect]`'s gRPC client has
-a JVM-side dependency, unlike the fleet's pure-Python REST connectors.
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `spark_ingest_run` | `INGESTTOOL` | Push one TransformRun's SparkApplication->SparkJob->Transform->TransformRun |
 
-## Usage
-Run the MCP server directly:
-```bash
-python -m spark_mcp
-```
+#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
 
-### MCP Configuration Example (stdio)
+<details>
+<summary>12 per-operation tools — one per public API method (click to expand)</summary>
 
-```json
-{
-  "mcpServers": {
-    "spark-mcp": {
-      "command": "uv",
-      "args": ["run", "spark-mcp"],
-      "env": {
-        "MCP_TOOL_MODE": "intent",
-        "SPARK_CONNECT_URL": "sc://spark-connect.apps.svc:15002",
-        "SPARK_LAKEHOUSE_CATALOG": "lakehouse",
-        "SPARK_LAKEHOUSE_SCOPE": "lakekeeper",
-        "SPARK_ENABLE_TRANSFORMS": "False",
-        "SPARKTOOL": "True"
-      }
-    }
-  }
-}
-```
+| MCP Tool | Toggle Env Var | Description |
+|----------|----------------|-------------|
+| `spark_application_status` | `SPARKTOOL` | Best-effort application/session status. |
+| `spark_cancel` | `SPARKTOOL` | Interrupt running operations on this session (all, or one tagged operation). |
+| `spark_close` | `SPARK_APITOOL` | Invoke the close operation. |
+| `spark_describe` | `SPARKTOOL` | Schema + column info for one fully-qualified table. |
+| `spark_get_session` | `SPARK_APITOOL` | Return the cached Spark Connect session, building it on first use. |
+| `spark_lineage_config` | `SPARKTOOL` | Report OpenLineage listener config — already set server-side at |
+| `spark_lineage_events` | `SPARKTOOL` | Named per this lane's tool-group contract; NOT a Kafka consumer. |
+| `spark_list_lakekeeper_tables` | `SPARKTOOL` | Invoke the list_lakekeeper_tables operation. |
+| `spark_list_transform_runs` | `SPARKTOOL` | Invoke the list_transform_runs operation. |
+| `spark_rerun_transform` | `SPARKTOOL` | Deterministically re-execute a prior TransformRun's manifest. |
+| `spark_sql` | `SPARKTOOL` | Execute one SQL statement and return rows as plain dicts. |
+| `spark_submit_transform` | `SPARKTOOL` | Execute one Transform manifest, recording a TransformRun (success or typed failure). |
 
-## Architecture
+</details>
 
-`api_client.py` wraps `api/api_client_spark.py`'s `SparkApi`, a thin gRPC client
-over `pyspark.sql.connect.session.SparkSession`, behind `api/api_client_base.py`'s
-typed-error layer (`SparkApiError` with a `kind`: `unreachable` / `job_failed` /
-`session_evicted` / `disabled` — never a silent empty result). `auth.py` mints
-Keycloak client-credentials identity tokens and can attach them as real gRPC bearer
-credentials, but the deployed Spark Connect endpoint is plaintext gRPC today, so
-attach is disabled by default (see `docs/architecture.md`).
+_1 action-routed tool(s) · 12 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
+<!-- MCP-TOOLS-TABLE:END -->
 
-`mcp_server.py` serves one typed `spark_<operation>` tool per `SparkApi` method
-(`spark_sql`, `spark_describe`, `spark_cancel`, `spark_submit_transform`,
-`spark_rerun_transform`, `spark_list_transform_runs`, `spark_list_lakekeeper_tables`,
-`spark_lineage_config`, `spark_lineage_events`, `spark_application_status`) through one
-`register_tool_surface(...)` call; GET-like reads are read-only and `spark_cancel` is
-destructive. `kg_ingest.py` exposes
-`ingest_entities`/`ingest_run` plus record-mapping helpers around the required
-`native_ingest` (Wire-First) authority.
-
-## Python version
-
-Python 3.14 (floor 3.12) against a Spark 4.1 server. `pyspark-client` 4.1 is the
-thin Spark Connect client; it runs on numpy 2, pandas 3 and pyarrow wheels.
-`pyspark-client` ships only a pure-Python sdist, so it is the one package built
-from source (`[tool.pipelines] allow-source-build = ["pyspark-client"]`).
+---
 
 ## Environment Variables
 
@@ -206,56 +172,97 @@ _15 package + 24 inherited variable(s). Auto-generated from `.env.example` + the
 
 See [.env.example](.env.example) for the full template.
 
-## MCP Tools
+---
 
-| Group | Tools |
-|-------|-------|
-| session | `spark_sql`, `spark_describe`, `spark_cancel` |
-| transforms | `spark_submit_transform`, `spark_list_transform_runs`, `spark_rerun_transform` |
-| catalog | `spark_list_lakekeeper_tables` |
-| lineage | `spark_lineage_config`, `spark_lineage_events` |
-| ops | `spark_application_status` |
-| ingest | `spark_ingest_run` |
+## Installation
+
+Pick the extra that matches what the operator want to run:
+
+| Extra | Installs | Use when |
+|-------|----------|----------|
+| `spark-mcp[mcp]` | Connector-focused MCP server (`scion-sdk` — FastMCP/FastAPI + `medulla[full]`) | The operator only run the **MCP server** (smallest install / image) |
+| `spark-mcp[all]` | Everything (`mcp` + `agent` + `logfire`) | Development / both surfaces |
+
+```bash
+uv pip install "spark-mcp[mcp]"
+```
+
+### Container images (`:mcp`)
+
+One multi-stage `docker/Dockerfile` builds the MCP-only image (`--target mcp`):
+
+```bash
+docker build --target mcp   -t spark-mcp:mcp    .
+```
+
+Both images install a headless JRE at runtime — `pyspark[connect]`'s gRPC client has
+a JVM-side dependency, unlike the fleet's pure-Python REST connectors.
+
+---
+
+## Usage
+Run the MCP server directly:
+```bash
+python -m spark_mcp
+```
+
+### MCP Configuration Example (stdio)
+
+```json
+{
+  "mcpServers": {
+    "spark-mcp": {
+      "command": "uv",
+      "args": ["run", "spark-mcp"],
+      "env": {
+        "MCP_TOOL_MODE": "intent",
+        "SPARK_CONNECT_URL": "sc://spark-connect.apps.svc:15002",
+        "SPARK_LAKEHOUSE_CATALOG": "lakehouse",
+        "SPARK_LAKEHOUSE_SCOPE": "lakekeeper",
+        "SPARK_ENABLE_TRANSFORMS": "False",
+        "SPARKTOOL": "True"
+      }
+    }
+  }
+}
+```
+
+---
+
+## Architecture
+
+`api_client.py` wraps `api/api_client_spark.py`'s `SparkApi`, a thin gRPC client
+over `pyspark.sql.connect.session.SparkSession`, behind `api/api_client_base.py`'s
+typed-error layer (`SparkApiError` with a `kind`: `unreachable` / `job_failed` /
+`session_evicted` / `disabled` — never a silent empty result). `auth.py` mints
+Keycloak client-credentials identity tokens and can attach them as real gRPC bearer
+credentials, but the deployed Spark Connect endpoint is plaintext gRPC today, so
+attach is disabled by default (see `docs/architecture.md`).
+
+`mcp_server.py` serves one typed `spark_<operation>` tool per `SparkApi` method
+(`spark_sql`, `spark_describe`, `spark_cancel`, `spark_submit_transform`,
+`spark_rerun_transform`, `spark_list_transform_runs`, `spark_list_lakekeeper_tables`,
+`spark_lineage_config`, `spark_lineage_events`, `spark_application_status`) through one
+`register_tool_surface(...)` call; GET-like reads are read-only and `spark_cancel` is
+destructive. `kg_ingest.py` exposes
+`ingest_entities`/`ingest_run` plus record-mapping helpers around the required
+`native_ingest` (Wire-First) authority.
+
+---
+
+## Python version
+
+Python 3.14 (floor 3.12) against a Spark 4.1 server. `pyspark-client` 4.1 is the
+thin Spark Connect client; it runs on numpy 2, pandas 3 and pyarrow wheels.
+`pyspark-client` ships only a pure-Python sdist, so it is the one package built
+from source (`[tool.pipelines] allow-source-build = ["pyspark-client"]`).
+
+---
 
 ## Documentation
 - [Architecture](docs/architecture.md)
 - [Configuration](docs/configuration.md)
 - [AGENTS.md](AGENTS.md) — canonical agent-facing context, live-proof evidence, known gaps
-
-## Available MCP Tools
-
-<!-- MCP-TOOLS-TABLE:START -->
-
-#### Condensed action-routed tools (`MCP_TOOL_MODE=condensed`)
-
-| MCP Tool | Toggle Env Var | Description |
-|----------|----------------|-------------|
-| `spark_ingest_run` | `INGESTTOOL` | Push one TransformRun's SparkApplication->SparkJob->Transform->TransformRun |
-
-#### Verbose 1:1 API-mapped tools (`MCP_TOOL_MODE=verbose` or `both`)
-
-<details>
-<summary>12 per-operation tools — one per public API method (click to expand)</summary>
-
-| MCP Tool | Toggle Env Var | Description |
-|----------|----------------|-------------|
-| `spark_application_status` | `SPARKTOOL` | Best-effort application/session status. |
-| `spark_cancel` | `SPARKTOOL` | Interrupt running operations on this session (all, or one tagged operation). |
-| `spark_close` | `SPARK_APITOOL` | Invoke the close operation. |
-| `spark_describe` | `SPARKTOOL` | Schema + column info for one fully-qualified table. |
-| `spark_get_session` | `SPARK_APITOOL` | Return the cached Spark Connect session, building it on first use. |
-| `spark_lineage_config` | `SPARKTOOL` | Report OpenLineage listener config — already set server-side at |
-| `spark_lineage_events` | `SPARKTOOL` | Named per this lane's tool-group contract; NOT a Kafka consumer. |
-| `spark_list_lakekeeper_tables` | `SPARKTOOL` | Invoke the list_lakekeeper_tables operation. |
-| `spark_list_transform_runs` | `SPARKTOOL` | Invoke the list_transform_runs operation. |
-| `spark_rerun_transform` | `SPARKTOOL` | Deterministically re-execute a prior TransformRun's manifest. |
-| `spark_sql` | `SPARKTOOL` | Execute one SQL statement and return rows as plain dicts. |
-| `spark_submit_transform` | `SPARKTOOL` | Execute one Transform manifest, recording a TransformRun (success or typed failure). |
-
-</details>
-
-_1 action-routed tool(s) · 12 verbose 1:1 tool(s). Each is enabled unless its `<DOMAIN>TOOL` toggle is set false; `MCP_TOOL_MODE` selects the surface (**`intent` default** — the six verb-tools, granular set loaded on demand · `condensed` action-routed · `verbose` 1:1 · `both`). Auto-generated — do not edit._
-<!-- MCP-TOOLS-TABLE:END -->
 
 ---
 
@@ -275,8 +282,6 @@ Contributions are welcome! Please ensure code quality by running local checks be
 - Lint code using `ruff check .`
 - Validate type-safety with `mypy .`
 - Run test suites using `pytest`
-
-
 
 <!-- GOVERNED-CAPABILITY:START -->
 ## Governed capability contract
