@@ -24,10 +24,14 @@ Destructive controls; every one needs explicit `confirm` and the operator's appr
 - `spark_kill_stage` kills a stage by `stage_id`.
 
 ## Steps
-1. Read the job or stage with the monitoring skill and confirm it is the one to stop.
-2. Prefer `spark_cancel` by tag over a kill when the work was tagged.
-3. Call the kill tool with `confirm` set, then read the status again.
+1. Read the target with `spark_application_status`. Verify the application is running and note the `job_id`, `stage_id` or `tag` to stop (use the spark-history-monitoring skill to identify it).
+2. If the work was tagged, call `spark_cancel` with the `tag` and `confirm` set to true. Verify the response reports the cancelled operations.
+3. Otherwise stop one job with `spark_kill_job` (`job_id`, `confirm` true) or one stage with `spark_kill_stage` (`stage_id`, `confirm` true). Verify the call returns without error.
+4. Read `spark_application_status` again. Verify the job or stage no longer shows as running.
 
-## Failure modes
-- Without `confirm` the call is refused.
-- Killing an already finished job returns a not-found error.
+## Failure recovery
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Call refused | `confirm` not set or the operator has not approved | Obtain the operator's approval, then call the same tool with `confirm` set to true |
+| Not-found error | Job or stage already finished, or wrong id | Call `spark_application_status` and re-read the active ids; skip the kill if the work is done |
+| Cancel affects nothing | No operation carries that `tag` | Use `spark_kill_job` with the `job_id` from the monitoring skill instead |

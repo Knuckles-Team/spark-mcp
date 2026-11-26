@@ -19,6 +19,20 @@ its spec-delivery integration. Read `AGENTS.md`, the affected module, and the
 owning `specs/` row before editing. Keep Spark facts, records, and ontology
 ownership in their existing connector and engine boundaries.
 
+## Steps
+1. Read `AGENTS.md` and the owning `specs/` row with `grep -rn "CONN-SPARK-MCP" specs`. Verify you can name the one requirement being changed.
+2. Edit only the files that slice touches. Verify with `git diff --stat` that nothing else changed.
+3. Run the narrowest mocked test with `pytest -q -k <topic>`. Verify it passes.
+4. Run `pre-commit run --all-files`. Verify every hook reports Passed.
+5. Review the full diff with `git diff` and commit with a `Spec:` trailer. Verify `git status --short` lists only intended paths.
+
+## Failure recovery
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| No spec row found | The change has no owning requirement | Extend the closest existing row in `specs/` before editing code |
+| A hook fails | Formatting, spelling or gate violation | Read the hook output, fix the named file and line, and commit again with hooks active |
+| A test needs live Spark | The test is not mocked | Replace the live call with a mock of the Spark Connect client and run `pytest -q -k <topic>` again |
+
 ## Rapid delivery: the 5-minute contract
 
 For a small, reviewable change:
