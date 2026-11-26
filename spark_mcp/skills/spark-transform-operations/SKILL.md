@@ -2,14 +2,7 @@
 name: spark-transform-operations
 skill_type: skill
 description: >-
-  Execute SQL over a live Spark Connect session and submit/track/rerun versioned
-  Transform manifests against the shared Iceberg lakehouse catalog via the
-  spark-mcp MCP server's session/transforms/catalog/lineage/ops tools. Use when
-  the agent must query the lakehouse through Spark, run a governed SQL/PySpark
-  transform that pins its input DatasetVersions, or check a Transform's run
-  history/application status. Do NOT use to push Spark records into the KG (use
-  spark-kg-ingestion) or to administer the Lakekeeper catalog directly (use
-  lakekeeper-mcp's own skills).
+  Run SQL over a live Spark Connect session and submit, track and rerun versioned Transform manifests against the Iceberg lakehouse via the spark-mcp MCP server. Use when the agent must query the lakehouse through Spark or run a governed transform. Do NOT use to push Spark records into the KG (use spark-kg-ingestion) or to administer the Lakekeeper catalog directly (use lakekeeper-mcp's own skills).
 license: MIT
 tags: [spark, spark-connect, iceberg, transform, mcp]
 metadata:
@@ -17,6 +10,8 @@ metadata:
   version: '0.2.0'
 ---
 # Spark Transform Operations
+
+Scope: Execute SQL over a live Spark Connect session and submit/track/rerun versioned Transform manifests against the shared Iceberg lakehouse catalog via the spark-mcp MCP server's session/transforms/catalog/lineage/ops tools. Use when the agent must query the lakehouse through Spark, run a governed SQL/PySpark transform that pins its input DatasetVersions, or check a Transform's run history/application status. Do NOT use to push Spark records into the KG (use spark-kg-ingestion) or to administer the Lakekeeper catalog directly (use lakekeeper-mcp's own skills).
 
 Spark Connect is LIVE on `spark-connect.apps.svc:15002` (the `spark-runner` pod's
 Connect server) — proven with a real `pyspark.sql.connect` session reading the
@@ -69,6 +64,20 @@ Connect via the `mcp-client` skill against the **`spark-mcp`** MCP server.
 | `spark_lineage_config` | Report OpenLineage listener config (server-side, static) |
 | `spark_lineage_events` | Not implemented — delegates to kafka-mcp/CA-25 |
 | `spark_application_status` | Client-observed session/application status |
+
+## Steps
+1. Confirm the session with `spark_application_status`. Verify it reports an active Spark Connect session.
+2. Inspect inputs with `spark_list_lakekeeper_tables` and `spark_describe`. Verify the table schema is what the transform expects.
+3. For ad hoc reads call `spark_sql` with one statement. Verify the returned rows and columns.
+4. For a governed transform call `spark_submit_transform` with pinned inputs (requires `SPARK_ENABLE_TRANSFORMS`). Verify the response carries a run id and a success status.
+5. Review history with `spark_list_transform_runs`, and replay with `spark_rerun_transform`. Verify the rerun reuses the original pinned `inputs`.
+
+## Failure recovery
+| Failure | Cause | Recovery |
+|---------|-------|----------|
+| Typed connection error | Spark Connect endpoint unreachable | Check `SPARK_CONNECT_URL` with the operator, then call `spark_application_status` to confirm the session |
+| Submit or rerun refused | `SPARK_ENABLE_TRANSFORMS` is unset | Ask the operator to set `SPARK_ENABLE_TRANSFORMS` to true, then call `spark_submit_transform` again |
+| Wrong data from a rerun | A rerun reuses the original pinned inputs | Submit a new transform with `spark_submit_transform` and updated `as_of_version` pins |
 
 ## Failure modes to expect
 - An unreachable Spark Connect endpoint raises a typed connection error, never a
